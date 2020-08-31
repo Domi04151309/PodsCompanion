@@ -3,6 +3,10 @@
     <string name="app_by">Pods Companion by Domi04151309\nBased on <a href="https://github.com/adolfintel/OpenPods">OpenPods</a> by Federico Dossena</string>
 
     <string name="loading">Loading</string>
+    <string name="str_left">Left</string>
+    <string name="str_case">Case</string>
+    <string name="str_right">Right</string>
+    <string name="unknown_status">\??%</string>
 
     <string name="prefs">Settings</string>
     <string name="pref_in_ear_detection">In-ear detection</string>

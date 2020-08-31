@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="?dialogPreferredPadding"
+    android:baselineAligned="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/pref_icon_height"
+            android:padding="?dialogPreferredPadding"
+            android:contentDescription="@string/str_left"
+            app:srcCompat="@drawable/ic_pod" />
+
+        <TextView
+            style="@style/BatteryBig"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_left" />
+
+        <TextView
+            style="@style/BatterySmall"
+            android:id="@+id/txt_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/unknown_status" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/pref_icon_height"
+            android:padding="?dialogPreferredPadding"
+            android:contentDescription="@string/str_case"
+            app:srcCompat="@drawable/ic_case" />
+
+        <TextView
+            style="@style/BatteryBig"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_case" />
+
+        <TextView
+            style="@style/BatterySmall"
+            android:id="@+id/txt_case"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/unknown_status" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/pref_icon_height"
+            android:padding="?dialogPreferredPadding"
+            android:contentDescription="@string/str_right"
+            android:scaleX="-1"
+            app:srcCompat="@drawable/ic_pod" />
+
+        <TextView
+            style="@style/BatteryBig"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_right" />
+
+        <TextView
+            style="@style/BatterySmall"
+            android:id="@+id/txt_right"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/unknown_status" />
+    </LinearLayout>
+</LinearLayout>

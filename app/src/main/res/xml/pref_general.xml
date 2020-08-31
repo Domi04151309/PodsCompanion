@@ -1,18 +1,18 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference android:title="@string/loading" />
+    <Preference android:layout="@layout/layout_battery"/>
 
     <PreferenceCategory android:title="@string/prefs">
 
         <SwitchPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:icon="@drawable/ic_hearing"
             android:key="in_ear_detection"
             android:summary="@string/pref_in_ear_detection_summary"
             android:title="@string/pref_in_ear_detection" />
         <SwitchPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:icon="@drawable/ic_notification"
             android:key="show_notification"
             android:summary="@string/pref_show_notification_summary"

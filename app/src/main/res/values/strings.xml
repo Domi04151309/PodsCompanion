@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">Pods Companion</string>
+
+    <string name="loading">Loading</string>
+
+    <string name="prefs">Settings</string>
+    <string name="pref_in_ear_detection">In-ear detection</string>
+    <string name="pref_in_ear_detection_summary">Play audio when in and pause audio when out automatically</string>
+    <string name="pref_show_notification">Show notification</string>
+    <string name="pref_show_notification_summary">Show a notification with the battery status when your headphones are connected</string>
+    <string name="pref_show_pop_up">Show pop-up</string>
+    <string name="pref_show_pop_up_summary">Show a pop-up with the battery status after your headphones are connected</string>
+
+    <string name="about">About</string>
+    <string name="about_summary">About the app</string>
 </resources>

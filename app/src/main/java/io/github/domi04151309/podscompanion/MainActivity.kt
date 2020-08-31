@@ -2,6 +2,7 @@ package io.github.domi04151309.podscompanion
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -12,6 +13,11 @@ class MainActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val actionBar = supportActionBar ?: return
+        actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+        actionBar.setDisplayShowCustomEnabled(true)
+        actionBar.setCustomView(R.layout.action_bar)
+        actionBar.elevation = 0f
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.settings, PreferenceFragment())

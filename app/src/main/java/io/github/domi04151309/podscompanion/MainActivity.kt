@@ -1,5 +1,6 @@
 package io.github.domi04151309.podscompanion
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.Preference
@@ -33,7 +34,10 @@ class MainActivity : AppCompatActivity(),
     class PreferenceFragment : PreferenceFragmentCompat() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.pref_general)
-
+            findPreference<Preference>("about")?.setOnPreferenceClickListener {
+                startActivity(Intent(context, AboutActivity::class.java))
+                true
+            }
         }
     }
 }

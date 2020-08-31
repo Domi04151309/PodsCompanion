@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="about_item_margin">16dp</dimen>
+    <dimen name="about_divider_margin">32dp</dimen>
+    <dimen name="header_icon_height">48dp</dimen>
+</resources>

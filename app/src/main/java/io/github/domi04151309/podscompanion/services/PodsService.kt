@@ -1,8 +1,5 @@
 package io.github.domi04151309.podscompanion.services
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.BluetoothProfile.ServiceListener
@@ -11,12 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.IBinder
 import android.os.ParcelUuid
 import android.os.SystemClock
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.BuildConfig
@@ -27,7 +22,7 @@ import java.util.*
  * This is the class that does most of the work. It has 3 functions:
  * - Detect when AirPods are detected
  * - Receive beacons from AirPods and decode them (easier said than done thanks to google's autism)
- * - Display the notification with the status
+ * - Send broadcasts with the status
  */
 class PodsService : Service() {
 
@@ -59,7 +54,7 @@ class PodsService : Service() {
      * - The 7th character in the string represents the AirPods model (E=AirPods pro)
      *
      *
-     * After decoding a beacon, the status is written to leftStatus, rightStatus, caseStatus, chargeL, chargeR, chargeCase so that the NotificationThread can use the information
+     * After decoding a beacon, the status is written to leftStatus, rightStatus, caseStatus, chargeL, chargeR, chargeCase so that the BackgroundThread can use the information
      */
     internal fun startAirPodsScanner() {
         try {
@@ -185,42 +180,31 @@ class PodsService : Service() {
     }
 
     /**
-     * The following class is a thread that manages the notification while your AirPods are connected.
+     * The following class is a thread that manages the broadcasts while your AirPods are connected.
      *
-     *
-     * It simply reads the status variables every 1 seconds and creates, destroys, or updates the notification accordingly.
-     * The notification is shown when BT is on and AirPods are connected. The status is updated every 1 second. Battery% is hidden if we didn't receive a beacon for 30 seconds (screen off for a while)
-     *
+     * It simply reads the status variables every 1 seconds and sends broadcasts accordingly.
      *
      * This thread is the reason why we need permission to disable doze. In theory we could integrate this into the BLE scanner, but it sometimes glitched out with the screen off.
      */
-    private inner class NotificationThread : Thread() {
-        private val mNotifyManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    private inner class BackgroundThread : Thread() {
         override fun run() {
-            var notificationShowing = false
+            var shouldSendStatus = false
             val compat = packageManager.getInstallerPackageName(packageName)
-            val mBuilder = NotificationCompat.Builder(this@PodsService, TAG)
-            mBuilder.setShowWhen(false)
-            mBuilder.setOngoing(true)
-            mBuilder.setSmallIcon(R.drawable.ic_pods)
-            mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             while (true) {
                 if (maybeConnected && !(leftStatus == 15 && rightStatus == 15 && caseStatus == 15)) {
-                    if (!notificationShowing) {
-                        if (ENABLE_LOGGING) Log.d(TAG, "Creating notification")
-                        notificationShowing = true
-                        mNotifyManager.notify(1, mBuilder.build())
+                    if (!shouldSendStatus) {
+                        if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
+                        shouldSendStatus = true
                     }
                 } else {
-                    if (notificationShowing) {
-                        if (ENABLE_LOGGING) Log.d(TAG, "Removing notification")
-                        notificationShowing = false
+                    if (shouldSendStatus) {
+                        if (ENABLE_LOGGING) Log.d(TAG, "Stopped sending status")
+                        shouldSendStatus = false
                         continue
                     }
-                    mNotifyManager.cancel(1)
                 }
 
-                if (notificationShowing) {
+                if (shouldSendStatus) {
                     if (ENABLE_LOGGING) Log.d(
                         TAG,
                         "Left: " + leftStatus + (if (chargeL) "+" else "") + " Right: " + rightStatus + (if (chargeR) "+" else "") + " Case: " + caseStatus + (if (chargeCase) "+" else "") + " Model: " + model
@@ -235,31 +219,12 @@ class PodsService : Service() {
                                 .putExtra(EXTRA_RIGHT, if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown)
                         )
                     }
-                    try {
-                        mNotifyManager.notify(1, mBuilder.build())
-                    } catch (ignored: Throwable) {
-                        mNotifyManager.cancel(1)
-                        mNotifyManager.notify(1, mBuilder.build())
-                    }
                 }
                 if ((if (compat == null) 0 else compat.hashCode() xor 0x43700437) == -0x7d1769fa) return
                 try {
                     sleep(1000)
                 } catch (ignored: InterruptedException) {
                 }
-            }
-        }
-
-        init {
-            // On Oreo (API27) and newer, create a notification channel.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(TAG, TAG, NotificationManager.IMPORTANCE_LOW)
-                channel.setSound(null, null)
-                channel.enableVibration(false)
-                channel.enableLights(false)
-                channel.setShowBadge(true)
-                channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-                mNotifyManager.createNotificationChannel(channel)
             }
         }
     }
@@ -295,8 +260,7 @@ class PodsService : Service() {
         intentFilter.addCategory("android.bluetooth.headset.intent.category.companyid.76")
         try {
             unregisterReceiver(btReceiver)
-        } catch (ignored: Throwable) {
-        }
+        } catch (ignored: Throwable) { }
         btReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val bluetoothDevice =
@@ -306,7 +270,7 @@ class PodsService : Service() {
                     val state =
                         intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
 
-                    // Bluetooth turned off, stop scanner and remove notification.
+                    // Bluetooth turned off, stop scanner.
                     if (state == BluetoothAdapter.STATE_OFF || state == BluetoothAdapter.STATE_TURNING_OFF) {
                         if (ENABLE_LOGGING) Log.d(TAG, "BT OFF")
                         maybeConnected = false
@@ -323,13 +287,13 @@ class PodsService : Service() {
 
                 // Airpods filter
                 if (bluetoothDevice != null && action?.isNotEmpty() == true && checkUUID(bluetoothDevice)) {
-                    // Airpods connected, show notification.
+                    // Airpods connected, send broadcasts.
                     if (action == BluetoothDevice.ACTION_ACL_CONNECTED) {
                         if (ENABLE_LOGGING) Log.d(TAG, "ACL CONNECTED")
                         maybeConnected = true
                     }
 
-                    // Airpods disconnected, remove notification but leave the scanner going.
+                    // Airpods disconnected, disable broadcasts but leave the scanner going.
                     if (action == BluetoothDevice.ACTION_ACL_DISCONNECTED || action == BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED) {
                         if (ENABLE_LOGGING) Log.d(TAG, "ACL DISCONNECTED")
                         maybeConnected = false
@@ -412,9 +376,9 @@ class PodsService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        if (n == null || !n!!.isAlive) {
-            n = NotificationThread()
-            n!!.start()
+        if (backgroundThread == null || backgroundThread?.isAlive == false) {
+            backgroundThread = BackgroundThread()
+            backgroundThread?.start()
         }
         return START_STICKY
     }
@@ -435,7 +399,7 @@ class PodsService : Service() {
         internal val recentBeacons = ArrayList<ScanResult>()
         private const val RECENT_BEACONS_MAX_T_NS = 10000000000L //10s
 
-        private var n: NotificationThread? = null
+        private var backgroundThread: BackgroundThread? = null
         private const val TAG = "AirPods"
         internal var lastSeenConnected: Long = 0
         private const val TIMEOUT_CONNECTED: Long = 30000

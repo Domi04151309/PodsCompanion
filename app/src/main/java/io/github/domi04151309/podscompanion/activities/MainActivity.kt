@@ -17,7 +17,6 @@ import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.custom.BatteryPreference
 import io.github.domi04151309.podscompanion.services.PodsService
 
-
 class MainActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 

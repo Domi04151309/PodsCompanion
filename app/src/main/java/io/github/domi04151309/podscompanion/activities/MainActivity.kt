@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.services.PodsService
 
 class MainActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
@@ -26,6 +27,8 @@ class MainActivity : AppCompatActivity(),
             .beginTransaction()
             .replace(R.id.settings, PreferenceFragment())
             .commit()
+
+        startService(Intent(this, PodsService::class.java))
     }
 
     override fun onStart() {

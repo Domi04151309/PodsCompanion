@@ -1,9 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        android:layout="@layout/layout_battery"
-        android:selectable="false" />
+    <io.github.domi04151309.podscompanion.custom.BatteryPreference
+        android:key="battery" />
 
     <PreferenceCategory android:title="@string/prefs">
 

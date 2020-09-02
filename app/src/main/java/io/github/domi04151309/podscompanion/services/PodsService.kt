@@ -11,15 +11,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import android.os.ParcelUuid
 import android.os.SystemClock
-import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import io.github.domi04151309.podscompanion.BuildConfig
 import io.github.domi04151309.podscompanion.R
 import java.util.*
 
@@ -183,7 +183,7 @@ class PodsService : Service() {
     internal fun isFlipped(str: String): Boolean {
         return ("" + str[10]).toInt(16) and 0x02 == 0
     }
-    
+
     /**
      * The following class is a thread that manages the notification while your AirPods are connected.
      *
@@ -205,7 +205,6 @@ class PodsService : Service() {
             mBuilder.setSmallIcon(R.drawable.ic_pods)
             mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             while (true) {
-
                 if (maybeConnected && !(leftStatus == 15 && rightStatus == 15 && caseStatus == 15)) {
                     if (!notificationShowing) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Creating notification")
@@ -227,12 +226,14 @@ class PodsService : Service() {
                         "Left: " + leftStatus + (if (chargeL) "+" else "") + " Right: " + rightStatus + (if (chargeR) "+" else "") + " Case: " + caseStatus + (if (chargeCase) "+" else "") + " Model: " + model
                     )
                     if (System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
-                        val podTextLeft =
-                            if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else ""
-                        val podTextRight =
-                            if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else ""
-                        val podTextCase =
-                            if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else ""
+                        val unknown = resources.getString(R.string.unknown_status)
+                        localBroadcastManager?.sendBroadcast(
+                            Intent()
+                                .setAction(AIRPODS_BATTERY)
+                                .putExtra(EXTRA_LEFT, if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown)
+                                .putExtra(EXTRA_CASE, if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown)
+                                .putExtra(EXTRA_RIGHT, if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown)
+                        )
                     }
                     try {
                         mNotifyManager.notify(1, mBuilder.build())
@@ -269,6 +270,7 @@ class PodsService : Service() {
 
     private var btReceiver: BroadcastReceiver? = null
     private var screenReceiver: BroadcastReceiver? = null
+    internal var localBroadcastManager: LocalBroadcastManager? = null
 
     /**
      * When the service is created, we register to get as many bluetooth and airpods related events as possible.
@@ -276,6 +278,9 @@ class PodsService : Service() {
      */
     override fun onCreate() {
         super.onCreate()
+
+        localBroadcastManager = LocalBroadcastManager.getInstance(applicationContext)
+
         val intentFilter = IntentFilter()
         intentFilter.addAction("android.bluetooth.device.action.ACL_CONNECTED")
         intentFilter.addAction("android.bluetooth.device.action.ACL_DISCONNECTED")
@@ -366,11 +371,8 @@ class PodsService : Service() {
         // Screen on/off listener to suspend scanning when the screen is off, to save battery
         try {
             unregisterReceiver(screenReceiver)
-        } catch (ignored: Throwable) {
-        }
-        val prefs = PreferenceManager.getDefaultSharedPreferences(
-            applicationContext
-        )
+        } catch (ignored: Throwable) { }
+        val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         if (prefs.getBoolean("batterySaver", false)) {
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
@@ -418,7 +420,7 @@ class PodsService : Service() {
     }
 
     companion object {
-        private const val ENABLE_LOGGING = true // Log is only displayed if this is a debug build, not release
+        internal val ENABLE_LOGGING = BuildConfig.DEBUG
         private var btScanner: BluetoothLeScanner? = null
         internal var leftStatus = 15
         internal var rightStatus = 15
@@ -438,5 +440,10 @@ class PodsService : Service() {
         internal var lastSeenConnected: Long = 0
         private const val TIMEOUT_CONNECTED: Long = 30000
         internal var maybeConnected = false
+
+        const val AIRPODS_BATTERY: String = "io.github.domi04151309.podscompanion.AIRPODS_BATTERY"
+        const val EXTRA_LEFT: String = "left"
+        const val EXTRA_CASE: String = "case"
+        const val EXTRA_RIGHT: String = "right"
     }
 }

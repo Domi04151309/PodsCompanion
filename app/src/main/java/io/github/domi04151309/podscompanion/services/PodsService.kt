@@ -30,7 +30,38 @@ import java.util.*
  * - Display the notification with the status
  */
 class PodsService : Service() {
-    private fun startAirPodsScanner() {
+
+    /**
+     * The following method (startAirPodsScanner) creates a bluetooth LE scanner.
+     * This scanner receives all beacons from nearby BLE devices (not just your devices!) so we need to do 3 things:
+     * - Check that the beacon comes from something that looks like a pair of AirPods
+     * - Make sure that it is YOUR pair of AirPods
+     * - Decode the beacon to get the status
+     *
+     *
+     * On a normal OS, we would use the bluetooth address of the device to filter out beacons from other devices.
+     * UNFORTUNATELY, someone at google was so concerned about privacy (yea, as if they give a shit) that he decided it was a good idea to not allow access to the bluetooth address of incoming BLE beacons.
+     * As a result, we have no reliable way to make sure that the beacon comes from YOUR airpods and not the guy sitting next to you on the bus.
+     * What we did to workaround this issue is this:
+     * - When a beacon arrives that looks like a pair of AirPods, look at the other beacons received in the last 10 seconds and get the strongest one
+     * - If the strongest beacon's fake address is the same as this, use this beacon; otherwise use the strongest beacon
+     * - Filter for signals stronger than -60db
+     * - Decode...
+     *
+     *
+     * Decoding the beacon:
+     * This was done through reverse engineering. Hopefully it's correct.
+     * - The beacon coming from a pair of AirPods contains a manufacturer specific data field n°76 of 27 bytes
+     * - We convert this data to a hexadecimal string
+     * - The 12th and 13th characters in the string represent the charge of the left and right pods. Under unknown circumstances, they are right and left instead (see isFlipped). Values between 0 and 10 are battery 0-100%; Value 15 means it's disconnected
+     * - The 15th character in the string represents the charge of the case. Values between 0 and 10 are battery 0-100%; Value 15 means it's disconnected
+     * - The 14th character in the string represents the "in charge" status. Bit 0 (LSB) is the left pod; Bit 1 is the right pod; Bit 2 is the case. Bit 3 might be case open/closed but I'm not sure and it's not used
+     * - The 7th character in the string represents the AirPods model (E=AirPods pro)
+     *
+     *
+     * After decoding a beacon, the status is written to leftStatus, rightStatus, caseStatus, chargeL, chargeR, chargeCase so that the NotificationThread can use the information
+     */
+    internal fun startAirPodsScanner() {
         try {
             if (ENABLE_LOGGING) Log.d(TAG, "START SCANNER")
             val prefs = PreferenceManager.getDefaultSharedPreferences(
@@ -40,7 +71,7 @@ class PodsService : Service() {
             val btAdapter = btManager.adapter
             if (prefs.getBoolean("batterySaver", false)) {
                 if (btScanner != null) {
-                    btScanner!!.stopScan(object : ScanCallback() {
+                    btScanner?.stopScan(object : ScanCallback() {
                         override fun onScanResult(callbackType: Int, result: ScanResult) {}
                     })
                 }
@@ -74,20 +105,20 @@ class PodsService : Service() {
                             var strongestBeacon: ScanResult? = null
                             var i = 0
                             while (i < recentBeacons.size) {
-                                if (SystemClock.elapsedRealtimeNanos() - recentBeacons[i]!!
+                                if (SystemClock.elapsedRealtimeNanos() - recentBeacons[i]
                                         .timestampNanos > RECENT_BEACONS_MAX_T_NS
                                 ) {
                                     recentBeacons.removeAt(i--)
                                     i++
                                     continue
                                 }
-                                if (strongestBeacon == null || strongestBeacon.rssi < recentBeacons[i]!!
+                                if (strongestBeacon == null || strongestBeacon.rssi < recentBeacons[i]
                                         .rssi
                                 ) strongestBeacon = recentBeacons[i]
                                 i++
                             }
                             if (strongestBeacon != null && strongestBeacon.device.address == result.device.address) strongestBeacon = result
-                            if (strongestBeacon?.rssi!! < -60) return
+                            if (strongestBeacon?.rssi ?: return < -60) return
                             val a = decodeHex(
                                 strongestBeacon.scanRecord?.getManufacturerSpecificData(76) ?: byteArrayOf()
                             )
@@ -116,7 +147,7 @@ class PodsService : Service() {
     }
 
     private val scanFilters: List<ScanFilter>
-        private get() {
+        get() {
             val manufacturerData = ByteArray(27)
             val manufacturerDataMask = ByteArray(27)
             manufacturerData[0] = 7
@@ -128,11 +159,11 @@ class PodsService : Service() {
             return listOf(builder.build())
         }
 
-    private fun stopAirPodsScanner() {
+    internal fun stopAirPodsScanner() {
         try {
             if (btScanner != null) {
                 if (ENABLE_LOGGING) Log.d(TAG, "STOP SCANNER")
-                btScanner!!.stopScan(object : ScanCallback() {
+                btScanner?.stopScan(object : ScanCallback() {
                     override fun onScanResult(callbackType: Int, result: ScanResult) {}
                 })
             }
@@ -143,33 +174,28 @@ class PodsService : Service() {
         }
     }
 
-    private fun decodeHex(bArr: ByteArray): String {
+    internal fun decodeHex(bArr: ByteArray): String {
         val ret = StringBuilder()
         for (b in bArr) ret.append(String.format("%02X", b))
         return ret.toString()
     }
 
-    private fun isFlipped(str: String): Boolean {
+    internal fun isFlipped(str: String): Boolean {
         return ("" + str[10]).toInt(16) and 0x02 == 0
     }
-
+    
+    /**
+     * The following class is a thread that manages the notification while your AirPods are connected.
+     *
+     *
+     * It simply reads the status variables every 1 seconds and creates, destroys, or updates the notification accordingly.
+     * The notification is shown when BT is on and AirPods are connected. The status is updated every 1 second. Battery% is hidden if we didn't receive a beacon for 30 seconds (screen off for a while)
+     *
+     *
+     * This thread is the reason why we need permission to disable doze. In theory we could integrate this into the BLE scanner, but it sometimes glitched out with the screen off.
+     */
     private inner class NotificationThread : Thread() {
-        private val isLocationEnabled: Boolean
-            private get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                applicationContext
-                val service = getSystemService(LOCATION_SERVICE) as LocationManager
-                service != null && service.isLocationEnabled
-            } else {
-                try {
-                    Settings.Secure.getInt(
-                        contentResolver,
-                        Settings.Secure.LOCATION_MODE
-                    ) != Settings.Secure.LOCATION_MODE_OFF
-                } catch (t: Throwable) {
-                    true
-                }
-            }
-        private val mNotifyManager: NotificationManager
+        private val mNotifyManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         override fun run() {
             var notificationShowing = false
             val compat = packageManager.getInstallerPackageName(packageName)
@@ -180,7 +206,7 @@ class PodsService : Service() {
             mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             while (true) {
 
-                /*&&System.currentTimeMillis()-lastSeenConnected<TIMEOUT_CONNECTED*/if (maybeConnected && !(leftStatus == 15 && rightStatus == 15 && caseStatus == 15)) {
+                if (maybeConnected && !(leftStatus == 15 && rightStatus == 15 && caseStatus == 15)) {
                     if (!notificationShowing) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Creating notification")
                         notificationShowing = true
@@ -195,26 +221,18 @@ class PodsService : Service() {
                     mNotifyManager.cancel(1)
                 }
 
-                // Apparently this restriction was removed in android Q
-                if (isLocationEnabled || Build.VERSION.SDK_INT >= 29) {
-                } else {
-                }
                 if (notificationShowing) {
                     if (ENABLE_LOGGING) Log.d(
                         TAG,
                         "Left: " + leftStatus + (if (chargeL) "+" else "") + " Right: " + rightStatus + (if (chargeR) "+" else "") + " Case: " + caseStatus + (if (chargeCase) "+" else "") + " Model: " + model
                     )
-                    if (model == MODEL_AIRPODS_NORMAL) {
-                    } else if (model == MODEL_AIRPODS_PRO) {
-                    }
                     if (System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
-                        val podText_Left =
+                        val podTextLeft =
                             if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else ""
-                        val podText_Right =
+                        val podTextRight =
                             if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else ""
-                        val podText_Case =
+                        val podTextCase =
                             if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else ""
-                    } else {
                     }
                     try {
                         mNotifyManager.notify(1, mBuilder.build())
@@ -232,7 +250,6 @@ class PodsService : Service() {
         }
 
         init {
-            mNotifyManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             // On Oreo (API27) and newer, create a notification channel.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(TAG, TAG, NotificationManager.IMPORTANCE_LOW)
@@ -279,7 +296,7 @@ class PodsService : Service() {
             override fun onReceive(context: Context, intent: Intent) {
                 val bluetoothDevice =
                     intent.getParcelableExtra<BluetoothDevice>("android.bluetooth.device.extra.DEVICE")
-                val action = intent.action!!
+                val action = intent.action
                 if (action == BluetoothAdapter.ACTION_STATE_CHANGED) {
                     val state =
                         intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
@@ -300,7 +317,7 @@ class PodsService : Service() {
                 }
 
                 // Airpods filter
-                if (bluetoothDevice != null && !action.isEmpty() && checkUUID(bluetoothDevice)) {
+                if (bluetoothDevice != null && action?.isNotEmpty() == true && checkUUID(bluetoothDevice)) {
                     // Airpods connected, show notification.
                     if (action == BluetoothDevice.ACTION_ACL_CONNECTED) {
                         if (ENABLE_LOGGING) Log.d(TAG, "ACL CONNECTED")
@@ -323,8 +340,7 @@ class PodsService : Service() {
 
         // This BT Profile Proxy allows us to know if airpods are already connected when the app is started.
         // It also fires an event when BT is turned off, in case the BroadcastReceiver doesn't do its job
-        val ba =
-            (Objects.requireNonNull(getSystemService(BLUETOOTH_SERVICE)) as BluetoothManager).adapter
+        val ba = (getSystemService(BLUETOOTH_SERVICE) as BluetoothManager).adapter
         ba.getProfileProxy(applicationContext, object : ServiceListener {
             override fun onServiceConnected(i: Int, bluetoothProfile: BluetoothProfile) {
                 if (i == BluetoothProfile.HEADSET) {
@@ -366,8 +382,6 @@ class PodsService : Service() {
                         stopAirPodsScanner()
                     } else if (intent.action == Intent.ACTION_SCREEN_ON) {
                         if (ENABLE_LOGGING) Log.d(TAG, "SCREEN ON")
-                        val ba =
-                            (Objects.requireNonNull(getSystemService(BLUETOOTH_SERVICE)) as BluetoothManager).adapter
                         if (ba.isEnabled) startAirPodsScanner()
                     }
                 }
@@ -379,7 +393,7 @@ class PodsService : Service() {
         }
     }
 
-    private fun checkUUID(bluetoothDevice: BluetoothDevice): Boolean {
+    internal fun checkUUID(bluetoothDevice: BluetoothDevice): Boolean {
         val AIRPODS_UUIDS = arrayOf(
             ParcelUuid.fromString("74ec2172-0bad-4d01-8f77-997b2be0722a"),
             ParcelUuid.fromString("2a72e02b-7b99-778f-014d-ad0b7221ec74")
@@ -404,66 +418,25 @@ class PodsService : Service() {
     }
 
     companion object {
-        private const val ENABLE_LOGGING =
-            true // Log is only displayed if this is a debug build, not release
+        private const val ENABLE_LOGGING = true // Log is only displayed if this is a debug build, not release
         private var btScanner: BluetoothLeScanner? = null
-        private var leftStatus = 15
-        private var rightStatus = 15
-        private var caseStatus = 15
-        private var chargeL = false
-        private var chargeR = false
-        private var chargeCase = false
+        internal var leftStatus = 15
+        internal var rightStatus = 15
+        internal var caseStatus = 15
+        internal var chargeL = false
+        internal var chargeR = false
+        internal var chargeCase = false
         private const val MODEL_AIRPODS_NORMAL = "airpods12"
         private const val MODEL_AIRPODS_PRO = "airpodspro"
-        private var model = MODEL_AIRPODS_NORMAL
+        internal var model = MODEL_AIRPODS_NORMAL
 
-        /**
-         * The following method (startAirPodsScanner) creates a bluetooth LE scanner.
-         * This scanner receives all beacons from nearby BLE devices (not just your devices!) so we need to do 3 things:
-         * - Check that the beacon comes from something that looks like a pair of AirPods
-         * - Make sure that it is YOUR pair of AirPods
-         * - Decode the beacon to get the status
-         *
-         *
-         * On a normal OS, we would use the bluetooth address of the device to filter out beacons from other devices.
-         * UNFORTUNATELY, someone at google was so concerned about privacy (yea, as if they give a shit) that he decided it was a good idea to not allow access to the bluetooth address of incoming BLE beacons.
-         * As a result, we have no reliable way to make sure that the beacon comes from YOUR airpods and not the guy sitting next to you on the bus.
-         * What we did to workaround this issue is this:
-         * - When a beacon arrives that looks like a pair of AirPods, look at the other beacons received in the last 10 seconds and get the strongest one
-         * - If the strongest beacon's fake address is the same as this, use this beacon; otherwise use the strongest beacon
-         * - Filter for signals stronger than -60db
-         * - Decode...
-         *
-         *
-         * Decoding the beacon:
-         * This was done through reverse engineering. Hopefully it's correct.
-         * - The beacon coming from a pair of AirPods contains a manufacturer specific data field n°76 of 27 bytes
-         * - We convert this data to a hexadecimal string
-         * - The 12th and 13th characters in the string represent the charge of the left and right pods. Under unknown circumstances, they are right and left instead (see isFlipped). Values between 0 and 10 are battery 0-100%; Value 15 means it's disconnected
-         * - The 15th character in the string represents the charge of the case. Values between 0 and 10 are battery 0-100%; Value 15 means it's disconnected
-         * - The 14th character in the string represents the "in charge" status. Bit 0 (LSB) is the left pod; Bit 1 is the right pod; Bit 2 is the case. Bit 3 might be case open/closed but I'm not sure and it's not used
-         * - The 7th character in the string represents the AirPods model (E=AirPods pro)
-         *
-         *
-         * After decoding a beacon, the status is written to leftStatus, rightStatus, caseStatus, chargeL, chargeR, chargeCase so that the NotificationThread can use the information
-         */
-        private val recentBeacons = ArrayList<ScanResult?>()
+        internal val recentBeacons = ArrayList<ScanResult>()
         private const val RECENT_BEACONS_MAX_T_NS = 10000000000L //10s
 
-        /**
-         * The following class is a thread that manages the notification while your AirPods are connected.
-         *
-         *
-         * It simply reads the status variables every 1 seconds and creates, destroys, or updates the notification accordingly.
-         * The notification is shown when BT is on and AirPods are connected. The status is updated every 1 second. Battery% is hidden if we didn't receive a beacon for 30 seconds (screen off for a while)
-         *
-         *
-         * This thread is the reason why we need permission to disable doze. In theory we could integrate this into the BLE scanner, but it sometimes glitched out with the screen off.
-         */
         private var n: NotificationThread? = null
         private const val TAG = "AirPods"
-        private var lastSeenConnected: Long = 0
+        internal var lastSeenConnected: Long = 0
         private const val TIMEOUT_CONNECTED: Long = 30000
-        private var maybeConnected = false
+        internal var maybeConnected = false
     }
 }

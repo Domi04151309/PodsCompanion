@@ -18,7 +18,7 @@ import io.github.domi04151309.podscompanion.R
 class SetupActivity : Activity() {
 
     companion object {
-        const val UPDATE_DELAY: Long = 500L
+        private const val UPDATE_DELAY: Long = 500L
     }
 
     internal var handler = Handler()

@@ -31,7 +31,7 @@
             android:id="@+id/txt_left"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/unknown_status" />
+            android:text="@string/loading" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -57,7 +57,7 @@
             android:id="@+id/txt_case"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/unknown_status" />
+            android:text="@string/loading" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -84,6 +84,6 @@
             android:id="@+id/txt_right"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/unknown_status" />
+            android:text="@string/loading" />
     </LinearLayout>
 </LinearLayout>

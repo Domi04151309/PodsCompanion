@@ -25,10 +25,10 @@ class MainActivity : AppCompatActivity(),
     }
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            batteryPreference?.leftTxt?.text = intent?.getStringExtra(PodsService.EXTRA_LEFT)
-            batteryPreference?.caseTxt?.text = intent?.getStringExtra(PodsService.EXTRA_CASE)
-            batteryPreference?.rightTxt?.text = intent?.getStringExtra(PodsService.EXTRA_RIGHT)
+        override fun onReceive(context: Context, intent: Intent) {
+            batteryPreference?.leftTxt?.text = intent.getStringExtra(PodsService.EXTRA_LEFT)
+            batteryPreference?.caseTxt?.text = intent.getStringExtra(PodsService.EXTRA_CASE)
+            batteryPreference?.rightTxt?.text = intent.getStringExtra(PodsService.EXTRA_RIGHT)
         }
     }
 

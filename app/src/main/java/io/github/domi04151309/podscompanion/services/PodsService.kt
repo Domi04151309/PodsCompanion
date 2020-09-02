@@ -1,5 +1,7 @@
 package io.github.domi04151309.podscompanion.services
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.BluetoothProfile.ServiceListener
@@ -8,10 +10,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.IBinder
 import android.os.ParcelUuid
 import android.os.SystemClock
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.BuildConfig
@@ -376,14 +380,35 @@ class PodsService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        createNotificationChannel()
+        startForeground(1,
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentText(resources.getString(R.string.service_text))
+                .setSmallIcon(R.drawable.ic_pods_white)
+                .setShowWhen(false)
+                .build())
         if (backgroundThread == null || backgroundThread?.isAlive == false) {
             backgroundThread = BackgroundThread()
             backgroundThread?.start()
         }
-        return START_STICKY
+        return START_REDELIVER_INTENT
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getSystemService(NotificationManager::class.java)?.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ID,
+                    resources.getString(R.string.service_channel),
+                    NotificationManager.IMPORTANCE_LOW
+                )
+            )
+        }
     }
 
     companion object {
+        const val CHANNEL_ID: String = "service_channel"
+
         internal val ENABLE_LOGGING = BuildConfig.DEBUG
         private var btScanner: BluetoothLeScanner? = null
         internal var leftStatus = 15

@@ -55,6 +55,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="io.github.domi04151309.podscompanion.activities.MainActivity" />
         </activity>
+        <service
+            android:name=".services.PodsService"
+            android:enabled="true"
+            android:exported="true"
+            tools:ignore="ExportedService" />
     </application>
 
 </manifest>

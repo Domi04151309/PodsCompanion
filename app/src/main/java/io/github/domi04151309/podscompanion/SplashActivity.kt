@@ -12,7 +12,7 @@ class SplashActivity : Activity() {
         if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("setup_complete", false))
             startActivity(Intent(this, MainActivity::class.java))
         else
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, SetupActivity::class.java))
         finish()
     }
 }

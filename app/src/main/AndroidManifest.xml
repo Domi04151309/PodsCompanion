@@ -23,6 +23,9 @@
         android:theme="@style/AppThemeLight"
         tools:ignore="GoogleAppIndexingWarning"
         android:fullBackupContent="@xml/backup_descriptor">
+        <activity
+            android:name=".SetupActivity"
+            android:launchMode="singleTop"/>
         <receiver
             android:name=".StartReceiver"
             android:enabled="true"

@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         localBroadcastManager.registerReceiver(batteryReceiver, IntentFilter(PodsService.AIRPODS_BATTERY))
+        localBroadcastManager.sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
     }
 
     override fun onStop() {

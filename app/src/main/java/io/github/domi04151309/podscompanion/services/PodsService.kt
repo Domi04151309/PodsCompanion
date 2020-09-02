@@ -169,8 +169,7 @@ class PodsService : Service() {
             leftStatus = 15
             rightStatus = 15
             caseStatus = 15
-        } catch (ignored: Throwable) {
-        }
+        } catch (ignored: Throwable) { }
     }
 
     internal fun decodeHex(bArr: ByteArray): String {
@@ -214,21 +213,13 @@ class PodsService : Service() {
                         "Left: " + leftStatus + (if (chargeL) "+" else "") + " Right: " + rightStatus + (if (chargeR) "+" else "") + " Case: " + caseStatus + (if (chargeCase) "+" else "") + " Model: " + model
                     )
                     if (System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
-                        val unknown = resources.getString(R.string.unknown_status)
-                        localBroadcastManager?.sendBroadcast(
-                            Intent()
-                                .setAction(AIRPODS_BATTERY)
-                                .putExtra(EXTRA_LEFT, if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown)
-                                .putExtra(EXTRA_CASE, if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown)
-                                .putExtra(EXTRA_RIGHT, if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown)
-                        )
+                        sendBatteryStatus()
                     }
                 }
                 if ((if (compat == null) 0 else compat.hashCode() xor 0x43700437) == -0x7d1769fa) return
                 try {
                     sleep(1000)
-                } catch (ignored: InterruptedException) {
-                }
+                } catch (ignored: InterruptedException) { }
             }
         }
     }
@@ -237,9 +228,21 @@ class PodsService : Service() {
         return null
     }
 
-    private var btReceiver: BroadcastReceiver? = null
-    private var screenReceiver: BroadcastReceiver? = null
-    internal var localBroadcastManager: LocalBroadcastManager? = null
+    internal fun sendBatteryStatus() {
+        val unknown = resources.getString(R.string.unknown_status)
+        localBroadcastManager.sendBroadcast(
+            Intent()
+                .setAction(AIRPODS_BATTERY)
+                .putExtra(EXTRA_LEFT, if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown)
+                .putExtra(EXTRA_CASE, if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown)
+                .putExtra(EXTRA_RIGHT, if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown)
+        )
+    }
+
+    private lateinit var btReceiver: BroadcastReceiver
+    private lateinit var screenReceiver: BroadcastReceiver
+    private lateinit var requestReceiver: BroadcastReceiver
+    private lateinit var localBroadcastManager: LocalBroadcastManager
 
     /**
      * When the service is created, we register to get as many bluetooth and airpods related events as possible.
@@ -262,9 +265,7 @@ class PodsService : Service() {
         intentFilter.addAction("android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED")
         intentFilter.addAction("android.bluetooth.a2dp.profile.action.PLAYING_STATE_CHANGED")
         intentFilter.addCategory("android.bluetooth.headset.intent.category.companyid.76")
-        try {
-            unregisterReceiver(btReceiver)
-        } catch (ignored: Throwable) { }
+
         btReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val bluetoothDevice =
@@ -306,10 +307,7 @@ class PodsService : Service() {
                 }
             }
         }
-        try {
-            registerReceiver(btReceiver, intentFilter)
-        } catch (ignored: Throwable) {
-        }
+        registerReceiver(btReceiver, intentFilter)
 
         // This BT Profile Proxy allows us to know if airpods are already connected when the app is started.
         // It also fires an event when BT is turned off, in case the BroadcastReceiver doesn't do its job
@@ -337,9 +335,6 @@ class PodsService : Service() {
         if (ba.isEnabled) startAirPodsScanner() // If BT is already on when the app is started, start the scanner without waiting for an event to happen
 
         // Screen on/off listener to suspend scanning when the screen is off, to save battery
-        try {
-            unregisterReceiver(screenReceiver)
-        } catch (ignored: Throwable) { }
         val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         if (prefs.getBoolean("batterySaver", false)) {
             val screenIntentFilter = IntentFilter()
@@ -356,11 +351,16 @@ class PodsService : Service() {
                     }
                 }
             }
-            try {
-                registerReceiver(screenReceiver, screenIntentFilter)
-            } catch (ignored: Throwable) {
-            }
+            registerReceiver(screenReceiver, screenIntentFilter)
         }
+
+        // Request receiver
+        requestReceiver = (object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                sendBatteryStatus()
+            }
+        })
+        localBroadcastManager.registerReceiver(requestReceiver, IntentFilter(REQUEST_AIRPODS_BATTERY))
     }
 
     internal fun checkUUID(bluetoothDevice: BluetoothDevice): Boolean {
@@ -375,8 +375,9 @@ class PodsService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (btReceiver != null) unregisterReceiver(btReceiver)
-        if (screenReceiver != null) unregisterReceiver(screenReceiver)
+        unregisterReceiver(btReceiver)
+        unregisterReceiver(screenReceiver)
+        localBroadcastManager.unregisterReceiver(requestReceiver)
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -431,6 +432,7 @@ class PodsService : Service() {
         internal var maybeConnected = false
 
         const val AIRPODS_BATTERY: String = "io.github.domi04151309.podscompanion.AIRPODS_BATTERY"
+        const val REQUEST_AIRPODS_BATTERY: String = "io.github.domi04151309.podscompanion.REQUEST_AIRPODS_BATTERY"
         const val EXTRA_LEFT: String = "left"
         const val EXTRA_CASE: String = "case"
         const val EXTRA_RIGHT: String = "right"

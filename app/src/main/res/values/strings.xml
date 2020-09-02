@@ -13,7 +13,7 @@
     <string name="str_left">Left</string>
     <string name="str_case">Case</string>
     <string name="str_right">Right</string>
-    <string name="unknown_status">Unknown</string>
+    <string name="unknown_status">Disconnected</string>
 
     <string name="prefs">Settings</string>
     <string name="pref_in_ear_detection">In-ear detection</string>

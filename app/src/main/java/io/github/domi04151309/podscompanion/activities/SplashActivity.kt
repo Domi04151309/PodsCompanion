@@ -1,4 +1,4 @@
-package io.github.domi04151309.podscompanion
+package io.github.domi04151309.podscompanion.activities
 
 import android.app.Activity
 import android.content.Intent

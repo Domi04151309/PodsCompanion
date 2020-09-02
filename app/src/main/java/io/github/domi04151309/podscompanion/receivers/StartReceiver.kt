@@ -1,4 +1,4 @@
-package io.github.domi04151309.podscompanion
+package io.github.domi04151309.podscompanion.receivers
 
 import android.content.BroadcastReceiver
 import android.content.Context

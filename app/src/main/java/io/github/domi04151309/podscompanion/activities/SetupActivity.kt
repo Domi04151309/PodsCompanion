@@ -1,4 +1,4 @@
-package io.github.domi04151309.podscompanion
+package io.github.domi04151309.podscompanion.activities
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.widget.Button
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import io.github.domi04151309.podscompanion.R
 
 class SetupActivity : Activity() {
 

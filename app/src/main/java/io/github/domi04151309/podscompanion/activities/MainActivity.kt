@@ -1,4 +1,4 @@
-package io.github.domi04151309.podscompanion
+package io.github.domi04151309.podscompanion.activities
 
 import android.Manifest
 import android.content.Intent
@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import io.github.domi04151309.podscompanion.R
 
 class MainActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {

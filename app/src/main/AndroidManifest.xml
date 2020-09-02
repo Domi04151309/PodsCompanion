@@ -24,10 +24,10 @@
         tools:ignore="GoogleAppIndexingWarning"
         android:fullBackupContent="@xml/backup_descriptor">
         <activity
-            android:name=".SetupActivity"
+            android:name=".activities.SetupActivity"
             android:launchMode="singleTop"/>
         <receiver
-            android:name=".StartReceiver"
+            android:name=".receivers.StartReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -36,7 +36,7 @@
             </intent-filter>
         </receiver>
         <activity
-            android:name=".SplashActivity"
+            android:name=".activities.SplashActivity"
             android:theme="@style/AppThemeSplash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,15 +45,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:launchMode="singleTop"/>
         <activity
-            android:name=".AboutActivity"
+            android:name=".activities.AboutActivity"
             android:label="@string/about"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activities.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="io.github.domi04151309.podscompanion.MainActivity" />
+                android:value="io.github.domi04151309.podscompanion.activities.MainActivity" />
         </activity>
     </application>
 

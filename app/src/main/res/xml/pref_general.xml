@@ -14,6 +14,12 @@
             android:summary="@string/pref_in_ear_detection_summary"
             android:title="@string/pref_in_ear_detection" />
         <SwitchPreference
+            android:defaultValue="false"
+            android:icon="@drawable/ic_pop_up"
+            android:key="show_pop_up"
+            android:summary="@string/pref_show_pop_up_summary"
+            android:title="@string/pref_show_pop_up" />
+        <SwitchPreference
             android:defaultValue="true"
             android:icon="@drawable/ic_notification"
             android:key="show_notification"
@@ -27,12 +33,6 @@
             android:key="notification_style"
             android:summary="@string/pref_notification_style_summary"
             android:title="@string/pref_notification_style" />
-        <SwitchPreference
-            android:defaultValue="false"
-            android:icon="@drawable/ic_pop_up"
-            android:key="show_pop_up"
-            android:summary="@string/pref_show_pop_up_summary"
-            android:title="@string/pref_show_pop_up" />
         <Preference
             android:icon="@drawable/ic_info"
             app:key="about"

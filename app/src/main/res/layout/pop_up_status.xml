@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:baselineAligned="false"
+    android:orientation="vertical"
+    android:padding="?dialogPreferredPadding">
+
+    <TextView
+        style="@style/BatteryBig"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/pref_icon_height"
+                android:contentDescription="@string/str_left"
+                android:padding="?dialogPreferredPadding"
+                android:src="@drawable/ic_pod" />
+
+            <TextView
+                style="@style/BatteryBig"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/str_left" />
+
+            <TextView
+                android:id="@+id/txt_left"
+                style="@style/BatterySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/loading" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/pref_icon_height"
+                android:contentDescription="@string/str_case"
+                android:padding="?dialogPreferredPadding"
+                android:src="@drawable/ic_case" />
+
+            <TextView
+                style="@style/BatteryBig"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/str_case" />
+
+            <TextView
+                android:id="@+id/txt_case"
+                style="@style/BatterySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/loading" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/pref_icon_height"
+                android:contentDescription="@string/str_right"
+                android:padding="?dialogPreferredPadding"
+                android:scaleX="-1"
+                android:src="@drawable/ic_pod" />
+
+            <TextView
+                style="@style/BatteryBig"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/str_right" />
+
+            <TextView
+                android:id="@+id/txt_right"
+                style="@style/BatterySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/loading" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

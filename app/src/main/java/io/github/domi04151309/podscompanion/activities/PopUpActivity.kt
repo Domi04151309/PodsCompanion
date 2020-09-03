@@ -25,7 +25,7 @@ class PopUpActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.layout_battery)
+        setContentView(R.layout.pop_up_status)
         localBroadcastManager = LocalBroadcastManager.getInstance(this)
     }
 

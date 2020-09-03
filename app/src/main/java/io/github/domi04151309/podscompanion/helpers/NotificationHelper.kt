@@ -4,37 +4,63 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.services.PodsService
 
-class NotificationHelper(private val context: Context) {
+class NotificationHelper(private val context: Context) : SharedPreferences.OnSharedPreferenceChangeListener {
 
     private val notificationManager: NotificationManagerCompat
+    private var shouldShowNotification: Boolean
 
     init {
         createNotificationChannel()
         notificationManager = NotificationManagerCompat.from(context)
+        shouldShowNotification = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+            PREF_SHOW_NOTIFICATION, PREF_SHOW_NOTIFICATION_DEFAULT
+        )
+        PreferenceManager.getDefaultSharedPreferences(context).registerOnSharedPreferenceChangeListener(this)
     }
 
     fun showNotification() {
-        notificationManager.notify(
-            NOTIFICATION_ID,
-            generateNotification(context.resources.getString(R.string.loading))
-        )
+        if (shouldShowNotification) {
+            notificationManager.notify(
+                NOTIFICATION_ID,
+                generateNotification(context.resources.getString(R.string.loading))
+            )
+            LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
+        }
     }
 
     fun updateNotification(left: String, case: String, right: String) {
-        notificationManager.notify(
-            NOTIFICATION_ID,
-            generateNotification(context.resources.getString(R.string.status_text, left, case, right))
-        )
-
+        if (shouldShowNotification) {
+            notificationManager.notify(
+                NOTIFICATION_ID,
+                generateNotification(context.resources.getString(R.string.status_text, left, case, right))
+            )
+        }
     }
 
     fun cancelNotification() {
         notificationManager.cancel(NOTIFICATION_ID)
+    }
+
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String) {
+        if (key == PREF_SHOW_NOTIFICATION) {
+            if (prefs.getBoolean(PREF_SHOW_NOTIFICATION, PREF_SHOW_NOTIFICATION_DEFAULT)) {
+                shouldShowNotification = true
+                showNotification()
+            } else {
+                shouldShowNotification = false
+                cancelNotification()
+            }
+        }
     }
 
     private fun generateNotification(text: String): Notification {
@@ -62,5 +88,7 @@ class NotificationHelper(private val context: Context) {
     companion object {
         private const val CHANNEL_ID = "status_channel"
         private const val NOTIFICATION_ID = 50
+        private const val PREF_SHOW_NOTIFICATION = "show_notification"
+        private const val PREF_SHOW_NOTIFICATION_DEFAULT = true
     }
 }

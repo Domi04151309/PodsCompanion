@@ -228,15 +228,23 @@ class PodsService : Service() {
         return null
     }
 
-    internal fun sendBatteryStatus() {
+    internal fun sendBatteryStatus(force: Boolean = false) {
         val unknown = resources.getString(R.string.unknown_status)
-        localBroadcastManager.sendBroadcast(
-            Intent()
-                .setAction(AIRPODS_BATTERY)
-                .putExtra(EXTRA_LEFT, if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown)
-                .putExtra(EXTRA_CASE, if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown)
-                .putExtra(EXTRA_RIGHT, if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown)
-        )
+        val extraLeft = if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown
+        val extraCase = if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown
+        val extraRight = if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown
+        if ((extraLeft != extraLeftCache && extraCase != extraCaseCache && extraRight != extraRightCache) || force) {
+            extraLeftCache = extraLeft
+            extraCaseCache = extraCase
+            extraRightCache = extraRight
+            localBroadcastManager.sendBroadcast(
+                Intent()
+                    .setAction(AIRPODS_BATTERY)
+                    .putExtra(EXTRA_LEFT, extraLeft)
+                    .putExtra(EXTRA_CASE, extraCase)
+                    .putExtra(EXTRA_RIGHT, extraRight)
+            )
+        }
     }
 
     private lateinit var btReceiver: BroadcastReceiver
@@ -357,7 +365,7 @@ class PodsService : Service() {
         // Request receiver
         requestReceiver = (object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                sendBatteryStatus()
+                sendBatteryStatus(true)
             }
         })
         localBroadcastManager.registerReceiver(requestReceiver, IntentFilter(REQUEST_AIRPODS_BATTERY))
@@ -421,6 +429,10 @@ class PodsService : Service() {
         private const val MODEL_AIRPODS_NORMAL = "airpods12"
         private const val MODEL_AIRPODS_PRO = "airpodspro"
         internal var model = MODEL_AIRPODS_NORMAL
+
+        private var extraLeftCache = ""
+        private var extraCaseCache = ""
+        private var extraRightCache = ""
 
         internal val recentBeacons = ArrayList<ScanResult>()
         private const val RECENT_BEACONS_MAX_T_NS = 10000000000L //10s

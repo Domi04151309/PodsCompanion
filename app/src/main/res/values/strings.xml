@@ -18,6 +18,7 @@
     <string name="str_right">Right</string>
     <string name="unknown_status">Disconnected</string>
     <string name="unknown_status_short">\?</string>
+    <string name="battery_percentage">%1$d\%%</string>
 
     <string name="prefs">Settings</string>
     <string name="pref_in_ear_detection">In-ear detection</string>

@@ -13,7 +13,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.services.PodsService
+import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 
 class NotificationHelper(private val context: Context) : SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -33,20 +35,19 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
 
     fun showNotification() {
         if (shouldShowNotification) {
-            val loading = context.resources.getString(R.string.loading)
             notificationManager.notify(
                 NOTIFICATION_ID,
-                generateNotification(loading, loading, loading)
+                generateNotification()
             )
-            requestUpdate()
+            LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
         }
     }
 
-    fun updateNotification(left: String, case: String, right: String) {
+    fun updateNotification() {
         if (shouldShowNotification) {
             notificationManager.notify(
                 NOTIFICATION_ID,
-                generateNotification(left, case, right)
+                generateNotification()
             )
         }
     }
@@ -70,33 +71,35 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
                 cancelNotification()
             }
         } else if (key == PREF_NOTIFICATION_STYLE) {
-            requestUpdate()
+            updateNotification()
         }
     }
 
-    private fun requestUpdate() {
-        LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
-    }
-
-    private fun generateNotification(left: String, case: String, right: String): Notification {
+    private fun generateNotification(): Notification {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_pods_white)
             .setShowWhen(false)
             .setOngoing(true)
+            .setNotificationSilent()
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         when (prefs.getString(PREF_NOTIFICATION_STYLE, PREF_NOTIFICATION_STYLE_RICH)) {
             PREF_NOTIFICATION_STYLE_RICH -> {
-                val disconnectedLong = context.resources.getString(R.string.unknown_status)
-                val disconnectedShort = context.resources.getString(R.string.unknown_status_short)
                 val views = RemoteViews(context.packageName, R.layout.notification_status)
-                views.setTextViewText(R.id.txt_left, if (left == disconnectedLong) disconnectedShort else left)
-                views.setTextViewText(R.id.txt_case, if (case == disconnectedLong) disconnectedShort else case)
-                views.setTextViewText(R.id.txt_right, if (right == disconnectedLong) disconnectedShort else right)
+                views.setTextViewText(R.id.txt_left, Status.generateString(context, status.left, R.string.unknown_status_short))
+                views.setTextViewText(R.id.txt_case, Status.generateString(context, status.case, R.string.unknown_status_short))
+                views.setTextViewText(R.id.txt_right, Status.generateString(context, status.right, R.string.unknown_status_short))
                 builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 builder.setContent(views)
             }
             PREF_NOTIFICATION_STYLE_TEXT_ONLY -> {
-                builder.setContentText(context.resources.getString(R.string.status_text, left, case, right))
+                builder.setContentText(
+                    context.getString(
+                        R.string.status_text,
+                        Status.generateString(context, status.left, R.string.unknown_status_short),
+                        Status.generateString(context, status.case, R.string.unknown_status_short),
+                        Status.generateString(context, status.right, R.string.unknown_status_short)
+                    )
+                )
             }
         }
         return builder.build()
@@ -107,7 +110,7 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
             context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID,
-                    context.resources.getString(R.string.status_channel),
+                    context.getString(R.string.status_channel),
                     NotificationManager.IMPORTANCE_DEFAULT
                 )
             )

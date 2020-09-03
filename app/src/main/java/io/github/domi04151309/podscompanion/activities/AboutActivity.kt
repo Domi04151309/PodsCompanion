@@ -12,7 +12,7 @@ class AboutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
-        findViewById<TextView>(R.id.versionTxt).text = resources.getString(
+        findViewById<TextView>(R.id.versionTxt).text = getString(
             R.string.about_version,
             BuildConfig.VERSION_NAME
         )

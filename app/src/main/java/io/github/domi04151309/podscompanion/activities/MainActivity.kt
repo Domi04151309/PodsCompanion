@@ -17,7 +17,9 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.custom.BatteryPreference
+import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.services.PodsService
+import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 
 class MainActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
@@ -28,9 +30,9 @@ class MainActivity : AppCompatActivity(),
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            batteryPreference?.leftTxt?.text = intent.getStringExtra(PodsService.EXTRA_LEFT)
-            batteryPreference?.caseTxt?.text = intent.getStringExtra(PodsService.EXTRA_CASE)
-            batteryPreference?.rightTxt?.text = intent.getStringExtra(PodsService.EXTRA_RIGHT)
+            batteryPreference?.leftTxt?.text = Status.generateString(context, status.left, R.string.unknown_status)
+            batteryPreference?.caseTxt?.text = Status.generateString(context, status.case, R.string.unknown_status)
+            batteryPreference?.rightTxt?.text = Status.generateString(context, status.right, R.string.unknown_status)
         }
     }
 

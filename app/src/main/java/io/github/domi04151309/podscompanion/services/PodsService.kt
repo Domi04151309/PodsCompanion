@@ -17,6 +17,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.activities.PopUpActivity
+import io.github.domi04151309.podscompanion.data.Status
+import io.github.domi04151309.podscompanion.data.StatusElement
 import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import java.util.*
 
@@ -186,9 +188,11 @@ class PodsService : Service() {
      *
      * This thread is the reason why we need permission to disable doze. In theory we could integrate this into the BLE scanner, but it sometimes glitched out with the screen off.
      */
+    internal var shouldSendStatus: Boolean = false
+
     private inner class BackgroundThread : Thread() {
         override fun run() {
-            var shouldSendStatus = false
+            shouldSendStatus = false
             val compat = packageManager.getInstallerPackageName(packageName)
             while (true) {
                 if (maybeConnected && !(leftStatus == 15 && rightStatus == 15 && caseStatus == 15)) {
@@ -226,25 +230,32 @@ class PodsService : Service() {
     }
 
     internal fun sendBatteryStatus(force: Boolean = false) {
-        val unknown = resources.getString(R.string.unknown_status)
-        val extraLeft = if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown
-        val extraCase = if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown
-        val extraRight = if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown
-        if (extraLeft != extraLeftCache || extraCase != extraCaseCache || extraRight != extraRightCache || force) {
-            extraLeftCache = extraLeft
-            extraCaseCache = extraCase
-            extraRightCache = extraRight
-            localBroadcastManager.sendBroadcast(
-                Intent()
-                    .setAction(AIRPODS_BATTERY)
-                    .putExtra(EXTRA_LEFT, extraLeft)
-                    .putExtra(EXTRA_CASE, extraCase)
-                    .putExtra(EXTRA_RIGHT, extraRight)
+        status = Status(
+            left = StatusElement(
+                charge = (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte(),
+                charging = chargeL,
+                connected = leftStatus != 15
+            ),
+            right = StatusElement(
+                charge = (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte(),
+                charging = chargeR,
+                connected = rightStatus != 15
+            ),
+            case = StatusElement(
+                charge = (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte(),
+                charging = chargeCase,
+                connected = caseStatus != 15
             )
-            notificationHelper.updateNotification(extraLeft, extraCase, extraRight)
+        )
+
+        if (status.left.charge != statusCache.left.charge || status.right.charge != statusCache.right.charge || status.case.charge != statusCache.case.charge || force) {
+            statusCache = status
+            localBroadcastManager.sendBroadcast(Intent().setAction(AIRPODS_BATTERY))
+            if (shouldSendStatus) notificationHelper.updateNotification()
+
             if (ENABLE_LOGGING) Log.d(
                 TAG,
-                "Left: ${extraLeft + if (chargeL) "+" else ""}, Right: ${extraRight + if (chargeR) "+" else ""}, Case: ${extraCase + if (chargeCase) "+" else ""}, Model: $model"
+                "Left: ${status.left.charge.toString() + if (chargeL) "+" else ""}, Right: ${status.right.charge.toString() + if (chargeR) "+" else ""}, Case: ${status.case.charge.toString() + if (chargeCase) "+" else ""}, Model: $model"
             )
         }
     }
@@ -397,7 +408,7 @@ class PodsService : Service() {
         createNotificationChannel()
         startForeground(1,
             NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentText(resources.getString(R.string.service_text))
+                .setContentText(getString(R.string.service_text))
                 .setSmallIcon(R.drawable.ic_pods_white)
                 .setShowWhen(false)
                 .build())
@@ -413,7 +424,7 @@ class PodsService : Service() {
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID,
-                    resources.getString(R.string.service_channel),
+                    getString(R.string.service_channel),
                     NotificationManager.IMPORTANCE_LOW
                 )
             )
@@ -421,7 +432,10 @@ class PodsService : Service() {
     }
 
     companion object {
-        const val CHANNEL_ID: String = "service_channel"
+        var status: Status = Status()
+        var statusCache: Status = Status()
+
+        private const val CHANNEL_ID: String = "service_channel"
 
         internal const val ENABLE_LOGGING = true
         private var btScanner: BluetoothLeScanner? = null

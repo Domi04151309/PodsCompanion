@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.services.PodsService
 
 class PopUpActivity : Activity() {
@@ -17,9 +18,9 @@ class PopUpActivity : Activity() {
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            findViewById<TextView>(R.id.txt_left).text = intent.getStringExtra(PodsService.EXTRA_LEFT)
-            findViewById<TextView>(R.id.txt_case).text = intent.getStringExtra(PodsService.EXTRA_CASE)
-            findViewById<TextView>(R.id.txt_right).text = intent.getStringExtra(PodsService.EXTRA_RIGHT)
+            findViewById<TextView>(R.id.txt_left).text = Status.generateString(context, PodsService.status.left, R.string.unknown_status)
+            findViewById<TextView>(R.id.txt_case).text = Status.generateString(context, PodsService.status.case, R.string.unknown_status)
+            findViewById<TextView>(R.id.txt_right).text = Status.generateString(context, PodsService.status.right, R.string.unknown_status)
         }
     }
 

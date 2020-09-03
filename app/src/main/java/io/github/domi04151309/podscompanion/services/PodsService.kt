@@ -18,7 +18,6 @@ import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.activities.PopUpActivity
 import io.github.domi04151309.podscompanion.data.Status
-import io.github.domi04151309.podscompanion.data.StatusElement
 import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import java.util.*
 
@@ -29,6 +28,17 @@ import java.util.*
  * - Send broadcasts with the status
  */
 class PodsService : Service() {
+
+    private var btScanner: BluetoothLeScanner? = null
+    internal val recentBeacons = ArrayList<ScanResult>()
+    internal var lastSeenConnected: Long = 0
+    internal var maybeConnected = false
+    private var statusCache: Status = Status()
+
+    internal var leftStatus = 15
+    internal var rightStatus = 15
+    internal var caseStatus = 15
+    internal var model = MODEL_AIRPODS_NORMAL
 
     /**
      * The following method (startAirPodsScanner) creates a bluetooth LE scanner.
@@ -128,9 +138,9 @@ class PodsService : Service() {
                             caseStatus = ("" + a[15]).toInt(16) // Case (0-10 batt; 15=disconnected)
                             val chargeStatus =
                                 ("" + a[14]).toInt(16) // Charge status (bit 0=left; bit 1=right; bit 2=case)
-                            chargeL = (chargeStatus and (if (flip) 0b00000010 else 0b00000001)) != 0
-                            chargeR = (chargeStatus and (if (flip) 0b00000001 else 0b00000010)) != 0
-                            chargeCase = chargeStatus and 4 != 0
+                            status.left.charging = (chargeStatus and (if (flip) 0b00000010 else 0b00000001)) != 0
+                            status.right.charging = (chargeStatus and (if (flip) 0b00000001 else 0b00000010)) != 0
+                            status.case.charging = chargeStatus and 4 != 0
                             model =
                                 if (a[7] == 'E') MODEL_AIRPODS_PRO else MODEL_AIRPODS_NORMAL // Detect if these are AirPods Pro or regular ones
                             lastSeenConnected = System.currentTimeMillis()
@@ -230,23 +240,12 @@ class PodsService : Service() {
     }
 
     internal fun sendBatteryStatus(force: Boolean = false) {
-        status = Status(
-            left = StatusElement(
-                charge = (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte(),
-                charging = chargeL,
-                connected = leftStatus != 15
-            ),
-            right = StatusElement(
-                charge = (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte(),
-                charging = chargeR,
-                connected = rightStatus != 15
-            ),
-            case = StatusElement(
-                charge = (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte(),
-                charging = chargeCase,
-                connected = caseStatus != 15
-            )
-        )
+        status.left.charge = (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte()
+        status.left.connected = leftStatus != 15
+        status.right.charge = (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte()
+        status.right.connected = rightStatus != 15
+        status.case.charge = (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte()
+        status.case.connected = caseStatus != 15
 
         if (status.left.charge != statusCache.left.charge || status.right.charge != statusCache.right.charge || status.case.charge != statusCache.case.charge || force) {
             statusCache = status
@@ -255,7 +254,10 @@ class PodsService : Service() {
 
             if (ENABLE_LOGGING) Log.d(
                 TAG,
-                "Left: ${status.left.charge.toString() + if (chargeL) "+" else ""}, Right: ${status.right.charge.toString() + if (chargeR) "+" else ""}, Case: ${status.case.charge.toString() + if (chargeCase) "+" else ""}, Model: $model"
+                "Left: ${status.left.charge.toString() + if (status.left.charging) "+" else ""}, " +
+                        "Right: ${status.right.charge.toString() + if (status.right.charging) "+" else ""}, " +
+                        "Case: ${status.case.charge.toString() + if (status.case.charging) "+" else ""}, " +
+                        "Model: $model"
             )
         }
     }
@@ -265,6 +267,7 @@ class PodsService : Service() {
     private lateinit var requestReceiver: BroadcastReceiver
     private lateinit var localBroadcastManager: LocalBroadcastManager
     internal lateinit var notificationHelper: NotificationHelper
+    private var backgroundThread: BackgroundThread? = null
 
     /**
      * When the service is created, we register to get as many bluetooth and airpods related events as possible.
@@ -432,43 +435,19 @@ class PodsService : Service() {
     }
 
     companion object {
-        var status: Status = Status()
-        var statusCache: Status = Status()
-
+        internal const val ENABLE_LOGGING: Boolean = true
         private const val CHANNEL_ID: String = "service_channel"
-
-        internal const val ENABLE_LOGGING = true
-        private var btScanner: BluetoothLeScanner? = null
-        internal var leftStatus = 15
-        internal var rightStatus = 15
-        internal var caseStatus = 15
-        internal var chargeL = false
-        internal var chargeR = false
-        internal var chargeCase = false
-        private const val MODEL_AIRPODS_NORMAL = "airpods12"
-        private const val MODEL_AIRPODS_PRO = "airpodspro"
-        internal var model = MODEL_AIRPODS_NORMAL
-
-        private var extraLeftCache = ""
-        private var extraCaseCache = ""
-        private var extraRightCache = ""
-
-        internal val recentBeacons = ArrayList<ScanResult>()
-        private const val RECENT_BEACONS_MAX_T_NS = 10000000000L //10s
-
-        private var backgroundThread: BackgroundThread? = null
-        private const val TAG = "AirPods"
-        internal var lastSeenConnected: Long = 0
+        private const val MODEL_AIRPODS_NORMAL: String = "airpods12"
+        private const val MODEL_AIRPODS_PRO: String = "airpodspro"
+        private const val RECENT_BEACONS_MAX_T_NS: Long = 10000000000 //10s
+        private const val TAG: String = "AirPods"
         private const val TIMEOUT_CONNECTED: Long = 30000
-        internal var maybeConnected = false
+        internal const val PREF_SHOW_POP_UP: String = "show_pop_up"
+        internal const val PREF_SHOW_POP_UP_DEFAULT: Boolean = false
 
         const val AIRPODS_BATTERY: String = "io.github.domi04151309.podscompanion.AIRPODS_BATTERY"
         const val REQUEST_AIRPODS_BATTERY: String = "io.github.domi04151309.podscompanion.REQUEST_AIRPODS_BATTERY"
-        const val EXTRA_LEFT: String = "left"
-        const val EXTRA_CASE: String = "case"
-        const val EXTRA_RIGHT: String = "right"
 
-        internal const val PREF_SHOW_POP_UP = "show_pop_up"
-        internal const val PREF_SHOW_POP_UP_DEFAULT = false
+        val status: Status = Status()
     }
 }

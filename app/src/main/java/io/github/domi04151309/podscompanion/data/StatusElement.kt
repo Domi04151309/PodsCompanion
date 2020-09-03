@@ -1,7 +1,7 @@
 package io.github.domi04151309.podscompanion.data
 
 data class StatusElement(
-    val charge: Byte = 0,
-    val charging: Boolean = false,
-    val connected: Boolean = false
+    var charge: Byte = 0,
+    var charging: Boolean = false,
+    var connected: Boolean = false
 )

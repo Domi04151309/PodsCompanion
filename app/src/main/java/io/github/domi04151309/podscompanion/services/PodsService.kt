@@ -233,7 +233,7 @@ class PodsService : Service() {
         val extraLeft = if (leftStatus == 10) "100%" else if (leftStatus < 10) (leftStatus * 10 + 5).toString() + "%" else unknown
         val extraCase = if (caseStatus == 10) "100%" else if (caseStatus < 10) (caseStatus * 10 + 5).toString() + "%" else unknown
         val extraRight = if (rightStatus == 10) "100%" else if (rightStatus < 10) (rightStatus * 10 + 5).toString() + "%" else unknown
-        if ((extraLeft != extraLeftCache && extraCase != extraCaseCache && extraRight != extraRightCache) || force) {
+        if (extraLeft != extraLeftCache || extraCase != extraCaseCache || extraRight != extraRightCache || force) {
             extraLeftCache = extraLeft
             extraCaseCache = extraCase
             extraRightCache = extraRight

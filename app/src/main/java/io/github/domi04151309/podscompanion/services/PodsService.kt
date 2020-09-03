@@ -10,15 +10,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
-import android.os.IBinder
-import android.os.ParcelUuid
-import android.os.SystemClock
+import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.activities.PopUpActivity
 import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import java.util.*
 
@@ -198,6 +196,10 @@ class PodsService : Service() {
                         if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
                         shouldSendStatus = true
                         notificationHelper.showNotification()
+                        if (PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                                .getBoolean(PREF_SHOW_POP_UP, PREF_SHOW_POP_UP_DEFAULT)) {
+                            startActivity(Intent(applicationContext, PopUpActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }
                     }
                 } else {
                     if (shouldSendStatus) {
@@ -242,7 +244,7 @@ class PodsService : Service() {
             notificationHelper.updateNotification(extraLeft, extraCase, extraRight)
             if (ENABLE_LOGGING) Log.d(
                 TAG,
-                "Left: ${extraLeft + if (chargeL) "+" else ""} Right: ${extraRight + if (chargeR) "+" else ""} Case: ${extraCase + if (chargeCase) "+" else ""} Model: $model"
+                "Left: ${extraLeft + if (chargeL) "+" else ""}, Right: ${extraRight + if (chargeR) "+" else ""}, Case: ${extraCase + if (chargeCase) "+" else ""}, Model: $model"
             )
         }
     }
@@ -451,5 +453,8 @@ class PodsService : Service() {
         const val EXTRA_LEFT: String = "left"
         const val EXTRA_CASE: String = "case"
         const val EXTRA_RIGHT: String = "right"
+
+        internal const val PREF_SHOW_POP_UP = "show_pop_up"
+        internal const val PREF_SHOW_POP_UP_DEFAULT = false
     }
 }

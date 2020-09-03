@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -18,7 +17,7 @@
             android:layout_height="@dimen/pref_icon_height"
             android:padding="?dialogPreferredPadding"
             android:contentDescription="@string/str_left"
-            app:srcCompat="@drawable/ic_pod" />
+            android:src="@drawable/ic_pod" />
 
         <TextView
             style="@style/BatteryBig"
@@ -44,7 +43,7 @@
             android:layout_height="@dimen/pref_icon_height"
             android:padding="?dialogPreferredPadding"
             android:contentDescription="@string/str_case"
-            app:srcCompat="@drawable/ic_case" />
+            android:src="@drawable/ic_case" />
 
         <TextView
             style="@style/BatteryBig"
@@ -71,7 +70,7 @@
             android:padding="?dialogPreferredPadding"
             android:contentDescription="@string/str_right"
             android:scaleX="-1"
-            app:srcCompat="@drawable/ic_pod" />
+            android:src="@drawable/ic_pod" />
 
         <TextView
             style="@style/BatteryBig"

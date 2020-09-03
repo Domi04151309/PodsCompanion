@@ -7,6 +7,7 @@
     <PreferenceCategory android:title="@string/prefs">
 
         <SwitchPreference
+            android:enabled="false"
             android:defaultValue="true"
             android:icon="@drawable/ic_hearing"
             android:key="in_ear_detection"

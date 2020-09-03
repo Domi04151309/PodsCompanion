@@ -7,12 +7,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreference
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.custom.BatteryPreference
 import io.github.domi04151309.podscompanion.services.PodsService
@@ -83,6 +85,13 @@ class MainActivity : AppCompatActivity(),
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.pref_general)
             batteryPreference = findPreference("battery")
+            findPreference<SwitchPreference>("show_pop_up")?.setOnPreferenceClickListener {
+                if (!Settings.canDrawOverlays(context)) {
+                    (it as SwitchPreference).isChecked = false
+                    startActivityForResult(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), 1)
+                }
+                true
+            }
             findPreference<Preference>("about")?.setOnPreferenceClickListener {
                 startActivity(Intent(context, AboutActivity::class.java))
                 true

@@ -20,6 +20,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.BuildConfig
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import java.util.*
 
 /**
@@ -198,11 +199,13 @@ class PodsService : Service() {
                     if (!shouldSendStatus) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
                         shouldSendStatus = true
+                        notificationHelper.showNotification()
                     }
                 } else {
                     if (shouldSendStatus) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Stopped sending status")
                         shouldSendStatus = false
+                        notificationHelper.cancelNotification()
                         continue
                     }
                 }
@@ -244,6 +247,7 @@ class PodsService : Service() {
                     .putExtra(EXTRA_CASE, extraCase)
                     .putExtra(EXTRA_RIGHT, extraRight)
             )
+            notificationHelper.updateNotification(extraLeft, extraCase, extraRight)
         }
     }
 
@@ -251,6 +255,7 @@ class PodsService : Service() {
     private lateinit var screenReceiver: BroadcastReceiver
     private lateinit var requestReceiver: BroadcastReceiver
     private lateinit var localBroadcastManager: LocalBroadcastManager
+    internal lateinit var notificationHelper: NotificationHelper
 
     /**
      * When the service is created, we register to get as many bluetooth and airpods related events as possible.
@@ -260,6 +265,7 @@ class PodsService : Service() {
         super.onCreate()
 
         localBroadcastManager = LocalBroadcastManager.getInstance(applicationContext)
+        notificationHelper = NotificationHelper(applicationContext)
 
         val intentFilter = IntentFilter()
         intentFilter.addAction("android.bluetooth.device.action.ACL_CONNECTED")

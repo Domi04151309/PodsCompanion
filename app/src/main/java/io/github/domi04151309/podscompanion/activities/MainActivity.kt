@@ -24,20 +24,6 @@ import io.github.domi04151309.podscompanion.services.PodsService.Companion.statu
 class MainActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
-    companion object {
-        internal var batteryPreference: BatteryPreference? = null
-    }
-
-    private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            batteryPreference?.leftTxt?.text = Status.generateString(context, status.left, R.string.unknown_status)
-            batteryPreference?.caseTxt?.text = Status.generateString(context, status.case, R.string.unknown_status)
-            batteryPreference?.rightTxt?.text = Status.generateString(context, status.right, R.string.unknown_status)
-        }
-    }
-
-    private lateinit var localBroadcastManager: LocalBroadcastManager
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -51,7 +37,6 @@ class MainActivity : AppCompatActivity(),
             .replace(R.id.settings, PreferenceFragment())
             .commit()
 
-        localBroadcastManager = LocalBroadcastManager.getInstance(this)
     }
 
     override fun onStart() {
@@ -59,14 +44,6 @@ class MainActivity : AppCompatActivity(),
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         }
-
-        localBroadcastManager.registerReceiver(batteryReceiver, IntentFilter(PodsService.AIRPODS_BATTERY))
-        localBroadcastManager.sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
-    }
-
-    override fun onStop() {
-        super.onStop()
-        localBroadcastManager.unregisterReceiver(batteryReceiver)
     }
 
     override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
@@ -84,9 +61,26 @@ class MainActivity : AppCompatActivity(),
     }
 
     class PreferenceFragment : PreferenceFragmentCompat() {
+
+        private lateinit var localBroadcastManager: LocalBroadcastManager
+        internal lateinit var batteryPreference: BatteryPreference
+
+        private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                batteryPreference.leftTxt?.text = Status.generateString(context, status.left, R.string.unknown_status)
+                batteryPreference.caseTxt?.text = Status.generateString(context, status.case, R.string.unknown_status)
+                batteryPreference.rightTxt?.text = Status.generateString(context, status.right, R.string.unknown_status)
+            }
+        }
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            localBroadcastManager = LocalBroadcastManager.getInstance(requireContext())
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.pref_general)
-            batteryPreference = findPreference("battery")
+            batteryPreference = findPreference("battery") ?: return
             findPreference<SwitchPreference>("show_pop_up")?.setOnPreferenceClickListener {
                 if (!Settings.canDrawOverlays(context)) {
                     (it as SwitchPreference).isChecked = false
@@ -98,6 +92,17 @@ class MainActivity : AppCompatActivity(),
                 startActivity(Intent(context, AboutActivity::class.java))
                 true
             }
+        }
+
+        override fun onStart() {
+            super.onStart()
+            localBroadcastManager.registerReceiver(batteryReceiver, IntentFilter(PodsService.AIRPODS_BATTERY))
+            localBroadcastManager.sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
+        }
+
+        override fun onStop() {
+            super.onStop()
+            localBroadcastManager.unregisterReceiver(batteryReceiver)
         }
     }
 }

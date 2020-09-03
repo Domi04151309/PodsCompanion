@@ -18,7 +18,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
-import io.github.domi04151309.podscompanion.BuildConfig
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import java.util.*
@@ -99,8 +98,7 @@ class PodsService : Service() {
                             if (data == null || data.size != 27) return
                             recentBeacons.add(result)
                             if (ENABLE_LOGGING) {
-                                Log.d(TAG, "" + result.rssi + "db")
-                                Log.d(TAG, decodeHex(data))
+                                Log.d(TAG, "${result.rssi}db : ${decodeHex(data)}")
                             }
                             var strongestBeacon: ScanResult? = null
                             var i = 0
@@ -137,12 +135,12 @@ class PodsService : Service() {
                                 if (a[7] == 'E') MODEL_AIRPODS_PRO else MODEL_AIRPODS_NORMAL // Detect if these are AirPods Pro or regular ones
                             lastSeenConnected = System.currentTimeMillis()
                         } catch (t: Throwable) {
-                            if (ENABLE_LOGGING) Log.d(TAG, "" + t)
+                            if (ENABLE_LOGGING) Log.d(TAG, t.toString())
                         }
                     }
                 })
         } catch (t: Throwable) {
-            if (ENABLE_LOGGING) Log.d(TAG, "" + t)
+            if (ENABLE_LOGGING) Log.d(TAG, t.toString())
         }
     }
 
@@ -210,14 +208,8 @@ class PodsService : Service() {
                     }
                 }
 
-                if (shouldSendStatus) {
-                    if (ENABLE_LOGGING) Log.d(
-                        TAG,
-                        "Left: " + leftStatus + (if (chargeL) "+" else "") + " Right: " + rightStatus + (if (chargeR) "+" else "") + " Case: " + caseStatus + (if (chargeCase) "+" else "") + " Model: " + model
-                    )
-                    if (System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
-                        sendBatteryStatus()
-                    }
+                if (shouldSendStatus && System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
+                    sendBatteryStatus()
                 }
                 if ((if (compat == null) 0 else compat.hashCode() xor 0x43700437) == -0x7d1769fa) return
                 try {
@@ -248,6 +240,10 @@ class PodsService : Service() {
                     .putExtra(EXTRA_RIGHT, extraRight)
             )
             notificationHelper.updateNotification(extraLeft, extraCase, extraRight)
+            if (ENABLE_LOGGING) Log.d(
+                TAG,
+                "Left: ${extraLeft + if (chargeL) "+" else ""} Right: ${extraRight + if (chargeR) "+" else ""} Case: ${extraCase + if (chargeCase) "+" else ""} Model: $model"
+            )
         }
     }
 
@@ -391,6 +387,7 @@ class PodsService : Service() {
         super.onDestroy()
         unregisterReceiver(btReceiver)
         unregisterReceiver(screenReceiver)
+        notificationHelper.onDestroy()
         localBroadcastManager.unregisterReceiver(requestReceiver)
     }
 
@@ -424,7 +421,7 @@ class PodsService : Service() {
     companion object {
         const val CHANNEL_ID: String = "service_channel"
 
-        internal val ENABLE_LOGGING = BuildConfig.DEBUG
+        internal const val ENABLE_LOGGING = true
         private var btScanner: BluetoothLeScanner? = null
         internal var leftStatus = 15
         internal var rightStatus = 15

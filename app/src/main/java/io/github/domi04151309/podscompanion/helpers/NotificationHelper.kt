@@ -17,15 +17,17 @@ import io.github.domi04151309.podscompanion.services.PodsService
 class NotificationHelper(private val context: Context) : SharedPreferences.OnSharedPreferenceChangeListener {
 
     private val notificationManager: NotificationManagerCompat
+    private val prefs: SharedPreferences
     private var shouldShowNotification: Boolean
 
     init {
         createNotificationChannel()
         notificationManager = NotificationManagerCompat.from(context)
-        shouldShowNotification = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+        prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        shouldShowNotification = prefs.getBoolean(
             PREF_SHOW_NOTIFICATION, PREF_SHOW_NOTIFICATION_DEFAULT
         )
-        PreferenceManager.getDefaultSharedPreferences(context).registerOnSharedPreferenceChangeListener(this)
+        prefs.registerOnSharedPreferenceChangeListener(this)
     }
 
     fun showNotification() {
@@ -49,6 +51,11 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
 
     fun cancelNotification() {
         notificationManager.cancel(NOTIFICATION_ID)
+    }
+
+    fun onDestroy() {
+        prefs.unregisterOnSharedPreferenceChangeListener(this)
+        cancelNotification()
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String) {

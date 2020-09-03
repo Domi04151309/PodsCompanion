@@ -248,7 +248,7 @@ class PodsService : Service() {
         status.case.connected = caseStatus != 15
 
         if (status.left.charge != statusCache.left.charge || status.right.charge != statusCache.right.charge || status.case.charge != statusCache.case.charge || force) {
-            statusCache = status
+            statusCache = status.createClone()
             localBroadcastManager.sendBroadcast(Intent().setAction(AIRPODS_BATTERY))
             if (shouldSendStatus) notificationHelper.updateNotification()
 

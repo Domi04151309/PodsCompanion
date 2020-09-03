@@ -8,6 +8,9 @@ data class Status(
     val right: StatusElement = StatusElement(),
     val case: StatusElement = StatusElement()
 ) {
+
+    fun createClone(): Status = Status(left.createClone(), right.createClone(), case.createClone())
+
     companion object {
         fun generateString(context: Context, element: StatusElement, disconnectedId: Int): String {
             return if (element.connected) context.getString(R.string.battery_percentage, element.charge) else context.getString(disconnectedId)

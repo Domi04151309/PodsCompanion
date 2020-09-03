@@ -19,6 +19,14 @@
             android:key="show_notification"
             android:summary="@string/pref_show_notification_summary"
             android:title="@string/pref_show_notification" />
+        <ListPreference
+            android:defaultValue="rich"
+            android:entries="@array/pref_notification_style_array_display"
+            android:entryValues="@array/pref_notification_style_array_values"
+            android:icon="@drawable/ic_notification"
+            android:key="notification_style"
+            android:summary="@string/pref_notification_style_summary"
+            android:title="@string/pref_notification_style" />
         <SwitchPreference
             android:defaultValue="false"
             android:icon="@drawable/ic_pop_up"

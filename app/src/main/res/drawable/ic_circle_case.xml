@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:height="@dimen/notification_icon_height"
+        android:width="@dimen/notification_icon_height"
+        android:drawable="@drawable/ic_circle" />
+    <item
+        android:height="@dimen/notification_inner_icon_height"
+        android:width="@dimen/notification_inner_icon_height"
+        android:drawable="@drawable/ic_case_square"
+        android:gravity="center"/>
+</layer-list>

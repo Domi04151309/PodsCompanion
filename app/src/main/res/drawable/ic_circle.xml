@@ -1,0 +1,11 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <stroke
+        android:width="@dimen/notification_circle_width"
+        android:color="?android:attr/textColorSecondary" />
+
+    <size
+        android:width="@dimen/notification_icon_height"
+        android:height="@dimen/notification_icon_height" />
+</shape>

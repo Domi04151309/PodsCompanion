@@ -33,6 +33,12 @@
         <item name="android:textColor">@color/colorAccent</item>
     </style>
 
+    <style name="NotificationBig">
+        <item name="android:gravity">center</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Small</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
+
     <style name="BatteryBig">
         <item name="android:gravity">center</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>

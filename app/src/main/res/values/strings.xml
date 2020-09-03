@@ -17,14 +17,26 @@
     <string name="str_case">Case</string>
     <string name="str_right">Right</string>
     <string name="unknown_status">Disconnected</string>
+    <string name="unknown_status_short">\?</string>
 
     <string name="prefs">Settings</string>
     <string name="pref_in_ear_detection">In-ear detection</string>
     <string name="pref_in_ear_detection_summary">Play audio when in and pause audio when out automatically</string>
     <string name="pref_show_notification">Show notification</string>
     <string name="pref_show_notification_summary">Show a notification with the battery status when your headphones are connected</string>
+    <string name="pref_notification_style">Notification style</string>
+    <string name="pref_notification_style_summary">Choose a notification style</string>
     <string name="pref_show_pop_up">Show pop-up</string>
     <string name="pref_show_pop_up_summary">Show a pop-up with the battery status after your headphones are connected</string>
+
+    <string-array name="pref_notification_style_array_values">
+        <item>rich</item>
+        <item>text</item>
+    </string-array>
+    <string-array name="pref_notification_style_array_display">
+        <item>Rich notification</item>
+        <item>Text only</item>
+    </string-array>
 
     <string name="about">About</string>
     <string name="about_summary">About the app</string>

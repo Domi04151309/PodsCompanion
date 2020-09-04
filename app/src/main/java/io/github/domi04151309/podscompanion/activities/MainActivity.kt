@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity(),
             .replace(R.id.settings, PreferenceFragment())
             .commit()
 
+        ContextCompat.startForegroundService(this, Intent(this, PodsService::class.java))
     }
 
     override fun onStart() {

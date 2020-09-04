@@ -1,0 +1,14 @@
+Pods Companion allows you to use your AirPods™ how they were intended to be used.
+View the battery status, use in-ear detection, and more.
+This app comes with a battery notification, a pop-up, and a widget, which can all be turned on or off individually.
+
+<font color="#2467d6"><b>Features</b></font>
+- In-ear detection
+- Notification
+- Pop-up
+- Widget
+
+<font color="#2467d6"><b>Related Links</b></font>
+Source code: <a href="https://github.com/Domi04151309/PodsCompanion">https://github.com/Domi04151309/PodsCompanion</a>
+Website: <a href="https://domi04151309.github.io/Android/PodsCompanion">https://domi04151309.github.io/Android/PodsCompanion</a>
+Icons8: <a href="https://icons8.com/">https://icons8.com/</a>

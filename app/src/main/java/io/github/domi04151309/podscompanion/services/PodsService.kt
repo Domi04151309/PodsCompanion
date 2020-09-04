@@ -35,9 +35,6 @@ class PodsService : Service() {
     internal var maybeConnected = false
     private var statusCache: Status = Status()
 
-    internal var leftStatus = 15
-    internal var rightStatus = 15
-    internal var caseStatus = 15
     internal var model = MODEL_AIRPODS_NORMAL
 
     /**
@@ -97,6 +94,10 @@ class PodsService : Service() {
                 filters,
                 settings,
                 object : ScanCallback() {
+                    private var leftStatus = 15
+                    private var rightStatus = 15
+                    private var caseStatus = 15
+
                     override fun onBatchScanResults(scanResults: List<ScanResult>) {
                         for (result in scanResults) onScanResult(-1, result)
                         super.onBatchScanResults(scanResults)
@@ -131,18 +132,25 @@ class PodsService : Service() {
                                 strongestBeacon.scanRecord?.getManufacturerSpecificData(76) ?: byteArrayOf()
                             )
                             val flip = isFlipped(a)
-                            leftStatus =
-                                ("" + a[if (flip) 12 else 13]).toInt(16) // Left airpod (0-10 batt; 15=disconnected)
-                            rightStatus =
-                                ("" + a[if (flip) 13 else 12]).toInt(16) // Right airpod (0-10 batt; 15=disconnected)
-                            caseStatus = ("" + a[15]).toInt(16) // Case (0-10 batt; 15=disconnected)
-                            val chargeStatus =
-                                ("" + a[14]).toInt(16) // Charge status (bit 0=left; bit 1=right; bit 2=case)
+                            // Left airpod (0-10 batt; 15=disconnected)
+                            leftStatus = ("" + a[if (flip) 12 else 13]).toInt(16)
+                            status.left.charge = (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte()
+                            status.left.connected = leftStatus != 15
+                            // Right airpod (0-10 batt; 15=disconnected)
+                            rightStatus = ("" + a[if (flip) 13 else 12]).toInt(16)
+                            status.right.charge = (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte()
+                            status.right.connected = rightStatus != 15
+                            // Case (0-10 batt; 15=disconnected)
+                            caseStatus = ("" + a[15]).toInt(16)
+                            status.case.charge = (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte()
+                            status.case.connected = caseStatus != 15
+                            // Charge status (bit 0=left; bit 1=right; bit 2=case)
+                            val chargeStatus = ("" + a[14]).toInt(16)
                             status.left.charging = (chargeStatus and (if (flip) 0b00000010 else 0b00000001)) != 0
                             status.right.charging = (chargeStatus and (if (flip) 0b00000001 else 0b00000010)) != 0
                             status.case.charging = chargeStatus and 4 != 0
-                            model =
-                                if (a[7] == 'E') MODEL_AIRPODS_PRO else MODEL_AIRPODS_NORMAL // Detect if these are AirPods Pro or regular ones
+                            // Detect if these are AirPods Pro or regular ones
+                            model = if (a[7] == 'E') MODEL_AIRPODS_PRO else MODEL_AIRPODS_NORMAL
                             lastSeenConnected = System.currentTimeMillis()
                         } catch (t: Throwable) {
                             if (ENABLE_LOGGING) Log.d(TAG, t.toString())
@@ -175,9 +183,9 @@ class PodsService : Service() {
                     override fun onScanResult(callbackType: Int, result: ScanResult) {}
                 })
             }
-            leftStatus = 15
-            rightStatus = 15
-            caseStatus = 15
+            status.left.connected = false
+            status.right.connected = false
+            status.case.connected = false
         } catch (ignored: Throwable) { }
     }
 
@@ -205,7 +213,7 @@ class PodsService : Service() {
             shouldSendStatus = false
             val compat = packageManager.getInstallerPackageName(packageName)
             while (true) {
-                if (maybeConnected && !(leftStatus == 15 && rightStatus == 15 && caseStatus == 15)) {
+                if (maybeConnected && !(!status.left.connected && !status.right.connected && !status.case.connected)) {
                     if (!shouldSendStatus) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
                         shouldSendStatus = true
@@ -240,13 +248,6 @@ class PodsService : Service() {
     }
 
     internal fun sendBatteryStatus(force: Boolean = false) {
-        status.left.charge = (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte()
-        status.left.connected = leftStatus != 15
-        status.right.charge = (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte()
-        status.right.connected = rightStatus != 15
-        status.case.charge = (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte()
-        status.case.connected = caseStatus != 15
-
         if (status.left.charge != statusCache.left.charge || status.right.charge != statusCache.right.charge || status.case.charge != statusCache.case.charge || force) {
             statusCache = status.createClone()
             localBroadcastManager.sendBroadcast(Intent().setAction(AIRPODS_BATTERY))

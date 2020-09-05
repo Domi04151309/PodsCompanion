@@ -33,7 +33,6 @@ class PodsService : Service() {
     internal val recentBeacons = ArrayList<ScanResult>()
     internal var lastSeenConnected: Long = 0
     internal var maybeConnected = false
-    private var statusCache: Status = Status()
 
     internal var model = MODEL_AIRPODS_NORMAL
 
@@ -248,8 +247,8 @@ class PodsService : Service() {
     }
 
     internal fun sendBatteryStatus(force: Boolean = false) {
-        if (status.left.charge != statusCache.left.charge || status.right.charge != statusCache.right.charge || status.case.charge != statusCache.case.charge || force) {
-            statusCache = status.createClone()
+        if (status.hasChangedSinceCacheUpdate() || force) {
+            status.updateCache()
             localBroadcastManager.sendBroadcast(Intent().setAction(AIRPODS_BATTERY))
             if (shouldSendStatus) notificationHelper.updateNotification()
 

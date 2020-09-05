@@ -9,7 +9,27 @@ data class Status(
     val case: StatusElement = StatusElement()
 ) {
 
-    fun createClone(): Status = Status(left.createClone(), right.createClone(), case.createClone())
+    private var cacheLeft: StatusElement = StatusElement()
+    private var cacheRight: StatusElement = StatusElement()
+    private var cacheCase: StatusElement = StatusElement()
+
+    fun updateCache() {
+        cacheLeft = left.createClone()
+        cacheRight = right.createClone()
+        cacheCase = case.createClone()
+    }
+
+    fun hasChangedSinceCacheUpdate(): Boolean {
+        return left.charge != cacheLeft.charge
+                || left.charging != cacheLeft.charging
+                || left.connected != cacheLeft.connected
+                || right.charge != cacheRight.charge
+                || right.charging != cacheRight.charging
+                || right.connected != cacheRight.connected
+                || case.charge != cacheCase.charge
+                || case.charging != cacheCase.charging
+                || case.connected != cacheCase.connected
+    }
 
     companion object {
         fun generateString(context: Context, element: StatusElement, disconnectedId: Int): String {

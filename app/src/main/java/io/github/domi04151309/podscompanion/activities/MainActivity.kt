@@ -17,7 +17,6 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.custom.BatteryPreference
-import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.services.PodsService
 import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 

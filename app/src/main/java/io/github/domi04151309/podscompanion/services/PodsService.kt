@@ -213,7 +213,7 @@ class PodsService : Service() {
                     if (!status.available) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
                         status.available = true
-                        notificationHelper.showNotification()
+                        notificationHelper.updateNotification()
                         if (PreferenceManager.getDefaultSharedPreferences(applicationContext)
                                 .getBoolean(PREF_SHOW_POP_UP, PREF_SHOW_POP_UP_DEFAULT)) {
                             startActivity(Intent(applicationContext, PopUpActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

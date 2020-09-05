@@ -4,16 +4,13 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
-import io.github.domi04151309.podscompanion.services.PodsService
 import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 
 class NotificationHelper(private val context: Context) : SharedPreferences.OnSharedPreferenceChangeListener {
@@ -30,16 +27,6 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
             PREF_SHOW_NOTIFICATION, PREF_SHOW_NOTIFICATION_DEFAULT
         )
         prefs.registerOnSharedPreferenceChangeListener(this)
-    }
-
-    fun showNotification() {
-        if (shouldShowNotification) {
-            notificationManager.notify(
-                NOTIFICATION_ID,
-                generateNotification()
-            )
-            LocalBroadcastManager.getInstance(context).sendBroadcast(Intent(PodsService.REQUEST_AIRPODS_BATTERY))
-        }
     }
 
     fun updateNotification() {
@@ -64,7 +51,7 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
         if (key == PREF_SHOW_NOTIFICATION) {
             if (prefs.getBoolean(PREF_SHOW_NOTIFICATION, PREF_SHOW_NOTIFICATION_DEFAULT)) {
                 shouldShowNotification = true
-                showNotification()
+                updateNotification()
             } else {
                 shouldShowNotification = false
                 cancelNotification()

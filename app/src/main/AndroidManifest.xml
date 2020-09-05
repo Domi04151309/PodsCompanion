@@ -17,16 +17,29 @@
 
     <application
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_descriptor"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppThemeLight"
-        tools:ignore="GoogleAppIndexingWarning"
-        android:fullBackupContent="@xml/backup_descriptor">
+        tools:ignore="GoogleAppIndexingWarning">
+        <receiver
+            android:name=".receivers.StatusWidgetReceiver"
+            android:label="@string/status_widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/status_widget_receiver_info" />
+        </receiver>
+
         <activity
             android:name=".activities.SetupActivity"
-            android:launchMode="singleTop"/>
+            android:launchMode="singleTop" />
+
         <receiver
             android:name=".receivers.StartReceiver"
             android:enabled="true"
@@ -36,6 +49,7 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
         <activity
             android:name=".activities.SplashActivity"
             android:theme="@style/AppThemeSplash">
@@ -47,13 +61,13 @@
         </activity>
         <activity
             android:name=".activities.MainActivity"
-            android:launchMode="singleTop"/>
+            android:launchMode="singleTop" />
         <activity
             android:name=".activities.PopUpActivity"
+            android:excludeFromRecents="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""
-            android:excludeFromRecents="true"
-            android:theme="@style/DialogThemeLight"/>
+            android:theme="@style/DialogThemeLight" />
         <activity
             android:name=".activities.AboutActivity"
             android:label="@string/about"
@@ -62,6 +76,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="io.github.domi04151309.podscompanion.activities.MainActivity" />
         </activity>
+
         <service
             android:name=".services.PodsService"
             android:enabled="true"

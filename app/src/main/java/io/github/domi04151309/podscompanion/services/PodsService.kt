@@ -3,14 +3,15 @@ package io.github.domi04151309.podscompanion.services
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.appwidget.AppWidgetManager
 import android.bluetooth.*
 import android.bluetooth.BluetoothProfile.ServiceListener
 import android.bluetooth.le.*
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.*
+import android.content.*
+import android.os.Build
+import android.os.IBinder
+import android.os.ParcelUuid
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -19,7 +20,9 @@ import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.activities.PopUpActivity
 import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.helpers.NotificationHelper
+import io.github.domi04151309.podscompanion.receivers.StatusWidgetReceiver
 import java.util.*
+
 
 /**
  * This is the class that does most of the work. It has 3 functions:
@@ -125,28 +128,35 @@ class PodsService : Service() {
                                 ) strongestBeacon = recentBeacons[i]
                                 i++
                             }
-                            if (strongestBeacon != null && strongestBeacon.device.address == result.device.address) strongestBeacon = result
+                            if (strongestBeacon != null && strongestBeacon.device.address == result.device.address) strongestBeacon =
+                                result
                             if (strongestBeacon?.rssi ?: return < -60) return
                             val a = decodeHex(
-                                strongestBeacon.scanRecord?.getManufacturerSpecificData(76) ?: byteArrayOf()
+                                strongestBeacon.scanRecord?.getManufacturerSpecificData(76)
+                                    ?: byteArrayOf()
                             )
                             val flip = isFlipped(a)
                             // Left airpod (0-10 batt; 15=disconnected)
                             leftStatus = ("" + a[if (flip) 12 else 13]).toInt(16)
-                            status.left.charge = (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte()
+                            status.left.charge =
+                                (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte()
                             status.left.connected = leftStatus != 15
                             // Right airpod (0-10 batt; 15=disconnected)
                             rightStatus = ("" + a[if (flip) 13 else 12]).toInt(16)
-                            status.right.charge = (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte()
+                            status.right.charge =
+                                (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte()
                             status.right.connected = rightStatus != 15
                             // Case (0-10 batt; 15=disconnected)
                             caseStatus = ("" + a[15]).toInt(16)
-                            status.case.charge = (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte()
+                            status.case.charge =
+                                (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte()
                             status.case.connected = caseStatus != 15
                             // Charge status (bit 0=left; bit 1=right; bit 2=case)
                             val chargeStatus = ("" + a[14]).toInt(16)
-                            status.left.charging = (chargeStatus and (if (flip) 0b00000010 else 0b00000001)) != 0
-                            status.right.charging = (chargeStatus and (if (flip) 0b00000001 else 0b00000010)) != 0
+                            status.left.charging =
+                                (chargeStatus and (if (flip) 0b00000010 else 0b00000001)) != 0
+                            status.right.charging =
+                                (chargeStatus and (if (flip) 0b00000001 else 0b00000010)) != 0
                             status.case.charging = chargeStatus and 4 != 0
                             // Detect if these are AirPods Pro or regular ones
                             model = if (a[7] == 'E') MODEL_AIRPODS_PRO else MODEL_AIRPODS_NORMAL
@@ -216,7 +226,11 @@ class PodsService : Service() {
                         notificationHelper.updateNotification()
                         if (PreferenceManager.getDefaultSharedPreferences(applicationContext)
                                 .getBoolean(PREF_SHOW_POP_UP, PREF_SHOW_POP_UP_DEFAULT)) {
-                            startActivity(Intent(applicationContext, PopUpActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            startActivity(
+                                Intent(applicationContext, PopUpActivity::class.java).setFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK
+                                )
+                            )
                         }
                     }
                 } else {
@@ -248,6 +262,7 @@ class PodsService : Service() {
             status.updateCache()
             localBroadcastManager.sendBroadcast(Intent().setAction(AIRPODS_BATTERY))
             if (status.available) notificationHelper.updateNotification()
+            updateWidgets()
 
             if (ENABLE_LOGGING) Log.d(
                 TAG,
@@ -313,7 +328,9 @@ class PodsService : Service() {
                 }
 
                 // Airpods filter
-                if (bluetoothDevice != null && action?.isNotEmpty() == true && checkUUID(bluetoothDevice)) {
+                if (bluetoothDevice != null && action?.isNotEmpty() == true && checkUUID(
+                        bluetoothDevice
+                    )) {
                     // Airpods connected, send broadcasts.
                     if (action == BluetoothDevice.ACTION_ACL_CONNECTED) {
                         if (ENABLE_LOGGING) Log.d(TAG, "ACL CONNECTED")
@@ -362,7 +379,10 @@ class PodsService : Service() {
                 sendBatteryStatus(true)
             }
         })
-        localBroadcastManager.registerReceiver(requestReceiver, IntentFilter(REQUEST_AIRPODS_BATTERY))
+        localBroadcastManager.registerReceiver(
+            requestReceiver,
+            IntentFilter(REQUEST_AIRPODS_BATTERY)
+        )
     }
 
     internal fun checkUUID(bluetoothDevice: BluetoothDevice): Boolean {
@@ -385,12 +405,14 @@ class PodsService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         createNotificationChannel()
-        startForeground(1,
+        startForeground(
+            1,
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentText(getString(R.string.service_text))
                 .setSmallIcon(R.drawable.ic_pods_white)
                 .setShowWhen(false)
-                .build())
+                .build()
+        )
         if (backgroundThread == null || backgroundThread?.isAlive == false) {
             backgroundThread = BackgroundThread()
             backgroundThread?.start()
@@ -408,6 +430,19 @@ class PodsService : Service() {
                 )
             )
         }
+    }
+
+    private fun updateWidgets() {
+        sendBroadcast(
+            Intent()
+                .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, AppWidgetManager.getInstance(applicationContext).getAppWidgetIds(
+                    ComponentName(
+                        applicationContext,
+                        StatusWidgetReceiver::class.java
+                    )
+                ))
+        )
     }
 
     companion object {

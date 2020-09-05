@@ -8,6 +8,8 @@
     <string name="status_text">Left: %1$s, Case: %2$s, Right: %3$s</string>
     <string name="status_channel">Status channel</string>
 
+    <string name="status_widget">Status Widget</string>
+
     <string name="setup_title">Check your headphone\'s battery on your phone</string>
     <string name="setup_summary">To do that this app needs some permissions. Just grant them after you have clicked continue.</string>
     <string name="setup_button">Continue</string>

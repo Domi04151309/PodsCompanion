@@ -68,9 +68,9 @@ class MainActivity : AppCompatActivity(),
 
         private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                batteryPreference.leftTxt?.text = Status.generateString(context, status.left, R.string.unknown_status)
-                batteryPreference.caseTxt?.text = Status.generateString(context, status.case, R.string.unknown_status)
-                batteryPreference.rightTxt?.text = Status.generateString(context, status.right, R.string.unknown_status)
+                batteryPreference.leftTxt?.text = status.generateString(context, status.left, R.string.unknown_status)
+                batteryPreference.caseTxt?.text = status.generateString(context, status.case, R.string.unknown_status)
+                batteryPreference.rightTxt?.text = status.generateString(context, status.right, R.string.unknown_status)
             }
         }
 

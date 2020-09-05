@@ -205,17 +205,14 @@ class PodsService : Service() {
      *
      * This thread is the reason why we need permission to disable doze. In theory we could integrate this into the BLE scanner, but it sometimes glitched out with the screen off.
      */
-    internal var shouldSendStatus: Boolean = false
-
     private inner class BackgroundThread : Thread() {
         override fun run() {
-            shouldSendStatus = false
-            val compat = packageManager.getInstallerPackageName(packageName)
+            status.available = false
             while (true) {
                 if (maybeConnected && !(!status.left.connected && !status.right.connected && !status.case.connected)) {
-                    if (!shouldSendStatus) {
+                    if (!status.available) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
-                        shouldSendStatus = true
+                        status.available = true
                         notificationHelper.showNotification()
                         if (PreferenceManager.getDefaultSharedPreferences(applicationContext)
                                 .getBoolean(PREF_SHOW_POP_UP, PREF_SHOW_POP_UP_DEFAULT)) {
@@ -223,18 +220,18 @@ class PodsService : Service() {
                         }
                     }
                 } else {
-                    if (shouldSendStatus) {
+                    if (status.available) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Stopped sending status")
-                        shouldSendStatus = false
+                        status.available = false
                         notificationHelper.cancelNotification()
+                        sendBatteryStatus()
                         continue
                     }
                 }
 
-                if (shouldSendStatus && System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
+                if (status.available && System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
                     sendBatteryStatus()
                 }
-                if ((if (compat == null) 0 else compat.hashCode() xor 0x43700437) == -0x7d1769fa) return
                 try {
                     sleep(1000)
                 } catch (ignored: InterruptedException) { }
@@ -250,7 +247,7 @@ class PodsService : Service() {
         if (status.hasChangedSinceCacheUpdate() || force) {
             status.updateCache()
             localBroadcastManager.sendBroadcast(Intent().setAction(AIRPODS_BATTERY))
-            if (shouldSendStatus) notificationHelper.updateNotification()
+            if (status.available) notificationHelper.updateNotification()
 
             if (ENABLE_LOGGING) Log.d(
                 TAG,
@@ -263,7 +260,6 @@ class PodsService : Service() {
     }
 
     private lateinit var btReceiver: BroadcastReceiver
-    private lateinit var screenReceiver: BroadcastReceiver
     private lateinit var requestReceiver: BroadcastReceiver
     private lateinit var localBroadcastManager: LocalBroadcastManager
     internal lateinit var notificationHelper: NotificationHelper
@@ -360,26 +356,6 @@ class PodsService : Service() {
         }, BluetoothProfile.HEADSET)
         if (ba.isEnabled) startAirPodsScanner() // If BT is already on when the app is started, start the scanner without waiting for an event to happen
 
-        // Screen on/off listener to suspend scanning when the screen is off, to save battery
-        val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-        if (prefs.getBoolean("batterySaver", false)) {
-            val screenIntentFilter = IntentFilter()
-            screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
-            screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
-            screenReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    if (intent.action == Intent.ACTION_SCREEN_OFF) {
-                        if (ENABLE_LOGGING) Log.d(TAG, "SCREEN OFF")
-                        stopAirPodsScanner()
-                    } else if (intent.action == Intent.ACTION_SCREEN_ON) {
-                        if (ENABLE_LOGGING) Log.d(TAG, "SCREEN ON")
-                        if (ba.isEnabled) startAirPodsScanner()
-                    }
-                }
-            }
-            registerReceiver(screenReceiver, screenIntentFilter)
-        }
-
         // Request receiver
         requestReceiver = (object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -401,9 +377,9 @@ class PodsService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(btReceiver)
-        unregisterReceiver(screenReceiver)
+        backgroundThread?.interrupt()
         notificationHelper.onDestroy()
+        unregisterReceiver(btReceiver)
         localBroadcastManager.unregisterReceiver(requestReceiver)
     }
 

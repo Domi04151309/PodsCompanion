@@ -11,6 +11,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.services.PodsService
+import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 
 class PopUpActivity : Activity() {
 
@@ -18,9 +19,9 @@ class PopUpActivity : Activity() {
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            findViewById<TextView>(R.id.txt_left).text = Status.generateString(context, PodsService.status.left, R.string.unknown_status)
-            findViewById<TextView>(R.id.txt_case).text = Status.generateString(context, PodsService.status.case, R.string.unknown_status)
-            findViewById<TextView>(R.id.txt_right).text = Status.generateString(context, PodsService.status.right, R.string.unknown_status)
+            findViewById<TextView>(R.id.txt_left).text = status.generateString(context, status.left, R.string.unknown_status)
+            findViewById<TextView>(R.id.txt_case).text = status.generateString(context, status.case, R.string.unknown_status)
+            findViewById<TextView>(R.id.txt_right).text = status.generateString(context, status.right, R.string.unknown_status)
         }
     }
 

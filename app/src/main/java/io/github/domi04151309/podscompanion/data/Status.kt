@@ -15,5 +15,17 @@ data class Status(
         fun generateString(context: Context, element: StatusElement, disconnectedId: Int): String {
             return if (element.connected) context.getString(R.string.battery_percentage, element.charge) else context.getString(disconnectedId)
         }
+
+        fun generateDrawable(element: StatusElement): Int {
+            return if (element.connected) {
+                if (element.charging) {
+                    R.drawable.ic_battery_charging
+                } else {
+                    R.drawable.ic_battery
+                }
+            } else {
+                R.drawable.ic_battery_unknown
+            }
+        }
     }
 }

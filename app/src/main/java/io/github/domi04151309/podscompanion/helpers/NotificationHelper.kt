@@ -85,8 +85,11 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
         when (prefs.getString(PREF_NOTIFICATION_STYLE, PREF_NOTIFICATION_STYLE_RICH)) {
             PREF_NOTIFICATION_STYLE_RICH -> {
                 val views = RemoteViews(context.packageName, R.layout.notification_status)
+                views.setImageViewResource(R.id.state_left, Status.generateDrawable(status.left))
                 views.setTextViewText(R.id.txt_left, Status.generateString(context, status.left, R.string.unknown_status_short))
+                views.setImageViewResource(R.id.state_case, Status.generateDrawable(status.case))
                 views.setTextViewText(R.id.txt_case, Status.generateString(context, status.case, R.string.unknown_status_short))
+                views.setImageViewResource(R.id.state_right, Status.generateDrawable(status.right))
                 views.setTextViewText(R.id.txt_right, Status.generateString(context, status.right, R.string.unknown_status_short))
                 builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 builder.setContent(views)

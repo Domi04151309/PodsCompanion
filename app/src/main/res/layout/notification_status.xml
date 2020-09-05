@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:baselineAligned="false"
-    tools:ignore="UseCompoundDrawables">
+    android:baselineAligned="false">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -20,6 +18,14 @@
             android:layout_marginEnd="@dimen/notification_padding"
             android:contentDescription="@string/str_left"
             android:src="@drawable/ic_circle_pod" />
+
+        <ImageView
+            android:id="@+id/state_left"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/notification_padding"
+            android:contentDescription="@string/str_left"
+            android:src="@drawable/ic_battery_unknown" />
 
         <TextView
             android:id="@+id/txt_left"
@@ -43,6 +49,14 @@
             android:contentDescription="@string/str_case"
             android:src="@drawable/ic_circle_case" />
 
+        <ImageView
+            android:id="@+id/state_case"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/notification_padding"
+            android:contentDescription="@string/str_left"
+            android:src="@drawable/ic_battery_unknown" />
+
         <TextView
             android:id="@+id/txt_case"
             style="@style/NotificationBig"
@@ -65,6 +79,14 @@
             android:contentDescription="@string/str_right"
             android:scaleX="-1"
             android:src="@drawable/ic_circle_pod" />
+
+        <ImageView
+            android:id="@+id/state_right"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/notification_padding"
+            android:contentDescription="@string/str_left"
+            android:src="@drawable/ic_battery_unknown" />
 
         <TextView
             android:id="@+id/txt_right"

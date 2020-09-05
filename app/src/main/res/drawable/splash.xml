@@ -3,7 +3,7 @@
     android:opacity="opaque">
     <item android:drawable="@android:color/black"/>
     <item
-        android:drawable="@drawable/ic_pods"
+        android:drawable="@drawable/ic_pods_white"
         android:gravity="center"
         android:width="96dp"
         android:height="96dp"/>

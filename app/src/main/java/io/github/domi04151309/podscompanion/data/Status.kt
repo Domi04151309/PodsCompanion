@@ -37,7 +37,7 @@ data class Status(
 
     fun generateString(context: Context, element: StatusElement, disconnectedId: Int): String {
         return if (available) {
-            if (element.connected) context.getString(R.string.battery_percentage, element.charge)
+            if (element.charge != 0.toByte()) context.getString(R.string.battery_percentage, element.charge)
             else context.getString(disconnectedId)
         } else {
             context.getString(disconnectedId)

@@ -41,7 +41,17 @@ data class Status(
                 if (element.charging) {
                     R.drawable.ic_battery_charging
                 } else {
-                    R.drawable.ic_battery
+                    when {
+                        element.charge >= 100 -> R.drawable.ic_battery_100
+                        element.charge >= 90 -> R.drawable.ic_battery_90
+                        element.charge >= 80 -> R.drawable.ic_battery_80
+                        element.charge >= 60 -> R.drawable.ic_battery_60
+                        element.charge >= 50 -> R.drawable.ic_battery_50
+                        element.charge >= 30 -> R.drawable.ic_battery_30
+                        element.charge >= 20 -> R.drawable.ic_battery_20
+                        element.charge >= 0 -> R.drawable.ic_battery_0
+                        else -> R.drawable.ic_battery_100
+                    }
                 }
             } else {
                 R.drawable.ic_battery_unknown

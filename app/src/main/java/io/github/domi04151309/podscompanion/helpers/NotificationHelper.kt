@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -85,11 +86,19 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
         when (prefs.getString(PREF_NOTIFICATION_STYLE, PREF_NOTIFICATION_STYLE_RICH)) {
             PREF_NOTIFICATION_STYLE_RICH -> {
                 val views = RemoteViews(context.packageName, R.layout.notification_status)
-                views.setImageViewResource(R.id.state_left, Status.generateDrawable(status.left))
+                views.setImageViewResource(R.id.state_left, Status.generateDrawableId(status.left))
                 views.setTextViewText(R.id.txt_left, Status.generateString(context, status.left, R.string.unknown_status_short))
-                views.setImageViewResource(R.id.state_case, Status.generateDrawable(status.case))
+                views.setImageViewResource(R.id.state_case, Status.generateDrawableId(status.case))
                 views.setTextViewText(R.id.txt_case, Status.generateString(context, status.case, R.string.unknown_status_short))
-                views.setImageViewResource(R.id.state_right, Status.generateDrawable(status.right))
+                views.setImageViewResource(R.id.state_right, Status.generateDrawableId(status.right))
+                views.setTextViewText(R.id.txt_right, Status.generateString(context, status.right, R.string.unknown_status_short))
+                builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                builder.setContent(views)
+            }
+            PREF_NOTIFICATION_STYLE_RICH_WITHOUT_BATTERY_ICONS -> {
+                val views = RemoteViews(context.packageName, R.layout.notification_status_without_icons)
+                views.setTextViewText(R.id.txt_left, Status.generateString(context, status.left, R.string.unknown_status_short))
+                views.setTextViewText(R.id.txt_case, Status.generateString(context, status.case, R.string.unknown_status_short))
                 views.setTextViewText(R.id.txt_right, Status.generateString(context, status.right, R.string.unknown_status_short))
                 builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 builder.setContent(views)
@@ -127,6 +136,7 @@ class NotificationHelper(private val context: Context) : SharedPreferences.OnSha
         private const val PREF_SHOW_NOTIFICATION_DEFAULT = true
         private const val PREF_NOTIFICATION_STYLE = "notification_style"
         private const val PREF_NOTIFICATION_STYLE_RICH = "rich"
+        private const val PREF_NOTIFICATION_STYLE_RICH_WITHOUT_BATTERY_ICONS = "rich_without"
         private const val PREF_NOTIFICATION_STYLE_TEXT_ONLY = "text"
     }
 }

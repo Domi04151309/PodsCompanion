@@ -33,7 +33,7 @@ class BatteryPreference : Preference {
     }
 
     private fun setupView() {
-        layoutResource = R.layout.layout_battery
+        layoutResource = R.layout.preference_battery
         isSelectable = false
     }
 }

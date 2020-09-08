@@ -23,7 +23,6 @@ import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import io.github.domi04151309.podscompanion.receivers.StatusWidgetReceiver
 import java.util.*
 
-
 /**
  * This is the class that does most of the work. It has 3 functions:
  * - Detect when AirPods are detected
@@ -93,7 +92,7 @@ class PodsService : Service() {
                             if (data == null || data.size != 27) return
                             recentBeacons.add(result)
                             if (ENABLE_LOGGING) {
-                                Log.d(TAG, "${result.rssi}db : ${decodeHex(data)}")
+                                Log.d(TAG, "${result.rssi}db : ${decodeHex(data, true)}")
                             }
                             var strongestBeacon: ScanResult? = null
                             var i = 0
@@ -180,9 +179,9 @@ class PodsService : Service() {
         } catch (ignored: Throwable) { }
     }
 
-    internal fun decodeHex(bArr: ByteArray): String {
+    internal fun decodeHex(bArr: ByteArray, readable: Boolean = false): String {
         val ret = StringBuilder()
-        for (b in bArr) ret.append(String.format("%02X", b))
+        for (b in bArr) ret.append(String.format(if (readable) "%02X " else "%02X", b))
         return ret.toString()
     }
 

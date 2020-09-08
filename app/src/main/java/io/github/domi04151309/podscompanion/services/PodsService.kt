@@ -36,7 +36,6 @@ class PodsService : Service() {
     internal val recentBeacons = ArrayList<ScanResult>()
     internal var lastSeenConnected: Long = 0
     internal var maybeConnected = false
-
     internal var model = MODEL_AIRPODS_NORMAL
 
     /**
@@ -72,29 +71,12 @@ class PodsService : Service() {
     internal fun startAirPodsScanner() {
         try {
             if (ENABLE_LOGGING) Log.d(TAG, "START SCANNER")
-            val prefs = PreferenceManager.getDefaultSharedPreferences(
-                applicationContext
-            )
-            val btManager = (getSystemService(BLUETOOTH_SERVICE) as BluetoothManager)
-            val btAdapter = btManager.adapter
-            if (prefs.getBoolean("batterySaver", false)) {
-                if (btScanner != null) {
-                    btScanner?.stopScan(object : ScanCallback() {
-                        override fun onScanResult(callbackType: Int, result: ScanResult) {}
-                    })
-                }
-            }
+            val btAdapter = (getSystemService(BLUETOOTH_SERVICE) as BluetoothManager).adapter
             btScanner = btAdapter.bluetoothLeScanner
             if (!btAdapter.isEnabled) throw Exception("BT Off")
-            val filters = scanFilters
-            val settings: ScanSettings
-            settings =
-                if (prefs.getBoolean("batterySaver", false)) ScanSettings.Builder().setScanMode(0)
-                    .setReportDelay(0).build() else ScanSettings.Builder().setScanMode(2)
-                    .setReportDelay(2).build()
             btScanner?.startScan(
-                filters,
-                settings,
+                scanFilters,
+                ScanSettings.Builder().setScanMode(2).setReportDelay(2).build(),
                 object : ScanCallback() {
                     private var leftStatus = 15
                     private var rightStatus = 15
@@ -123,30 +105,30 @@ class PodsService : Service() {
                                     i++
                                     continue
                                 }
-                                if (strongestBeacon == null || strongestBeacon.rssi < recentBeacons[i]
-                                        .rssi
-                                ) strongestBeacon = recentBeacons[i]
+                                if (strongestBeacon == null
+                                    || strongestBeacon.rssi < recentBeacons[i].rssi)
+                                    strongestBeacon = recentBeacons[i]
                                 i++
                             }
-                            if (strongestBeacon != null && strongestBeacon.device.address == result.device.address) strongestBeacon =
-                                result
+                            if (strongestBeacon != null && strongestBeacon.device.address == result.device.address)
+                                strongestBeacon = result
                             if (strongestBeacon?.rssi ?: return < -60) return
                             val a = decodeHex(
                                 strongestBeacon.scanRecord?.getManufacturerSpecificData(76)
                                     ?: byteArrayOf()
                             )
                             val flip = isFlipped(a)
-                            // Left airpod (0-10 batt; 15=disconnected)
+                            // Left AirPod (0-10 battery; 15=disconnected)
                             leftStatus = ("" + a[if (flip) 12 else 13]).toInt(16)
                             status.left.charge =
                                 (if (leftStatus == 10) 100 else if (leftStatus < 10) leftStatus * 10 + 5 else status.left.charge).toByte()
                             status.left.connected = leftStatus != 15
-                            // Right airpod (0-10 batt; 15=disconnected)
+                            // Right AirPod (0-10 battery; 15=disconnected)
                             rightStatus = ("" + a[if (flip) 13 else 12]).toInt(16)
                             status.right.charge =
                                 (if (rightStatus == 10) 100 else if (rightStatus < 10) rightStatus * 10 + 5 else status.right.charge).toByte()
                             status.right.connected = rightStatus != 15
-                            // Case (0-10 batt; 15=disconnected)
+                            // Case (0-10 battery; 15=disconnected)
                             caseStatus = ("" + a[15]).toInt(16)
                             status.case.charge =
                                 (if (caseStatus == 10) 100 else if (caseStatus < 10) caseStatus * 10 + 5 else status.case.charge).toByte()
@@ -218,8 +200,8 @@ class PodsService : Service() {
     private inner class BackgroundThread : Thread() {
         override fun run() {
             status.available = false
-            while (true) {
-                if (maybeConnected && !(!status.left.connected && !status.right.connected && !status.case.connected)) {
+            while (!isInterrupted) {
+                if (maybeConnected && (status.left.connected || status.right.connected || status.case.connected)) {
                     if (!status.available) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Started sending status")
                         status.available = true
@@ -233,14 +215,12 @@ class PodsService : Service() {
                             )
                         }
                     }
-                } else {
-                    if (status.available) {
-                        if (ENABLE_LOGGING) Log.d(TAG, "Stopped sending status")
-                        status.available = false
-                        notificationHelper.cancelNotification()
-                        sendBatteryStatus()
-                        continue
-                    }
+                } else if (status.available) {
+                    if (ENABLE_LOGGING) Log.d(TAG, "Stopped sending status")
+                    status.available = false
+                    notificationHelper.cancelNotification()
+                    sendBatteryStatus()
+                    continue
                 }
 
                 if (status.available && System.currentTimeMillis() - lastSeenConnected < TIMEOUT_CONNECTED) {
@@ -281,7 +261,7 @@ class PodsService : Service() {
     private var backgroundThread: BackgroundThread? = null
 
     /**
-     * When the service is created, we register to get as many bluetooth and airpods related events as possible.
+     * When the service is created, we register to get as many bluetooth and AirPods related events as possible.
      * ACL_CONNECTED and ACL_DISCONNECTED should have been enough, but you never know with android these days.
      */
     override fun onCreate() {
@@ -327,17 +307,17 @@ class PodsService : Service() {
                     }
                 }
 
-                // Airpods filter
+                // AirPods filter
                 if (bluetoothDevice != null && action?.isNotEmpty() == true && checkUUID(
                         bluetoothDevice
                     )) {
-                    // Airpods connected, send broadcasts.
+                    // AirPods connected, send broadcasts.
                     if (action == BluetoothDevice.ACTION_ACL_CONNECTED) {
                         if (ENABLE_LOGGING) Log.d(TAG, "ACL CONNECTED")
                         maybeConnected = true
                     }
 
-                    // Airpods disconnected, disable broadcasts but leave the scanner going.
+                    // AirPods disconnected, disable broadcasts but leave the scanner going.
                     if (action == BluetoothDevice.ACTION_ACL_DISCONNECTED || action == BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED) {
                         if (ENABLE_LOGGING) Log.d(TAG, "ACL DISCONNECTED")
                         maybeConnected = false
@@ -348,7 +328,7 @@ class PodsService : Service() {
         }
         registerReceiver(btReceiver, intentFilter)
 
-        // This BT Profile Proxy allows us to know if airpods are already connected when the app is started.
+        // This BT Profile Proxy allows us to know if AirPods are already connected when the app is started.
         // It also fires an event when BT is turned off, in case the BroadcastReceiver doesn't do its job
         val ba = (getSystemService(BLUETOOTH_SERVICE) as BluetoothManager).adapter
         ba.getProfileProxy(applicationContext, object : ServiceListener {

@@ -31,16 +31,30 @@
     <string name="pref_show_notification_summary">Show a notification with the battery status when your headphones are connected</string>
     <string name="pref_notification_style">Notification style</string>
     <string name="pref_notification_style_summary">Choose a notification style</string>
+    <string name="pref_theme">Change theme</string>
+    <string name="pref_theme_summary">Changes the look of the app</string>
 
-    <string-array name="pref_notification_style_array_values">
+    <string-array name="pref_notification_style_array">
+        <item>Rich notification</item>
+        <item>Rich notification without icons</item>
+        <item>Text notification</item>
+    </string-array>
+    <string-array name="pref_notification_style_array_values" translatable="false">
         <item>rich</item>
         <item>rich_without</item>
         <item>text</item>
     </string-array>
-    <string-array name="pref_notification_style_array_display">
-        <item>Rich notification</item>
-        <item>Rich notification without icons</item>
-        <item>Text notification</item>
+    <string-array name="pref_theme_array">
+        <item>Light theme</item>
+        <item>Dark theme</item>
+        <item>Black theme</item>
+        <item>Follow system theme</item>
+    </string-array>
+    <string-array name="pref_theme_array_values" translatable="false">
+        <item>light</item>
+        <item>dark</item>
+        <item>black</item>
+        <item>auto</item>
     </string-array>
 
     <string name="about">About</string>

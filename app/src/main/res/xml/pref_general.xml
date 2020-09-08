@@ -8,7 +8,7 @@
 
         <SwitchPreference
             android:enabled="false"
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:icon="@drawable/ic_hearing"
             android:key="in_ear_detection"
             android:summary="@string/pref_in_ear_detection_summary"
@@ -27,12 +27,20 @@
             android:title="@string/pref_show_notification" />
         <ListPreference
             android:defaultValue="rich"
-            android:entries="@array/pref_notification_style_array_display"
+            android:entries="@array/pref_notification_style_array"
             android:entryValues="@array/pref_notification_style_array_values"
             android:icon="@drawable/ic_notification"
             android:key="notification_style"
             android:summary="@string/pref_notification_style_summary"
             android:title="@string/pref_notification_style" />
+        <ListPreference
+            android:defaultValue="auto"
+            android:entries="@array/pref_theme_array"
+            android:entryValues="@array/pref_theme_array_values"
+            android:icon="@drawable/ic_style"
+            android:key="theme"
+            android:summary="@string/pref_theme_summary"
+            android:title="@string/pref_theme" />
         <Preference
             android:icon="@drawable/ic_info"
             app:key="about"

@@ -14,6 +14,7 @@ import android.widget.Button
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.helpers.Theme
 
 class SetupActivity : Activity() {
 
@@ -25,6 +26,7 @@ class SetupActivity : Activity() {
 
     @SuppressLint("BatteryLife")
     override fun onCreate(savedInstanceState: Bundle?) {
+        Theme.set(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_setup)
 

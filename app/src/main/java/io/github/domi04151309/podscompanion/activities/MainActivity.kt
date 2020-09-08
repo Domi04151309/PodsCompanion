@@ -1,10 +1,7 @@
 package io.github.domi04151309.podscompanion.activities
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
@@ -14,16 +11,29 @@ import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 import androidx.preference.SwitchPreference
 import io.github.domi04151309.podscompanion.R
 import io.github.domi04151309.podscompanion.custom.BatteryPreference
+import io.github.domi04151309.podscompanion.helpers.Theme
 import io.github.domi04151309.podscompanion.services.PodsService
 import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 
 class MainActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
+    companion object {
+        private const val PREF_THEME = "theme"
+    }
+
+    private lateinit var prefs: SharedPreferences
+    private val prefsChangedListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+            if (key == PREF_THEME) this.recreate()
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        Theme.set(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val actionBar = supportActionBar ?: return
@@ -37,13 +47,24 @@ class MainActivity : AppCompatActivity(),
             .commit()
 
         ContextCompat.startForegroundService(this, Intent(this, PodsService::class.java))
+
+        prefs = PreferenceManager.getDefaultSharedPreferences(this)
     }
 
     override fun onStart() {
         super.onStart()
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         }
+
+        prefs.registerOnSharedPreferenceChangeListener(prefsChangedListener)
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        prefs.unregisterOnSharedPreferenceChangeListener(prefsChangedListener)
     }
 
     override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {

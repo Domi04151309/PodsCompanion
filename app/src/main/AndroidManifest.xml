@@ -67,7 +67,7 @@
             android:excludeFromRecents="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""
-            android:theme="@style/DialogThemeLight" />
+            android:theme="@style/PopUpThemeLight" />
         <activity
             android:name=".activities.AboutActivity"
             android:label="@string/about"

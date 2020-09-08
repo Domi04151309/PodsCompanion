@@ -45,6 +45,39 @@ internal object Theme {
         context.setTheme(R.style.AppThemePatch)
     }
 
+    fun setDialog(context: Context) {
+        when (PreferenceManager.getDefaultSharedPreferences(context).getString("theme", "light")) {
+            "light" -> {
+                context.setTheme(R.style.PopUpThemeLight)
+                recent(context, R.color.colorPrimary)
+            }
+            "dark" -> {
+                context.setTheme(R.style.PopUpThemeDark)
+                recent(context, R.color.colorPrimaryDark)
+            }
+            "black" -> {
+                context.setTheme(R.style.PopUpThemeBlack)
+                recent(context, R.color.colorPrimaryBlack)
+            }
+            "auto" -> {
+                when (context.resources.configuration.uiMode.and(Configuration.UI_MODE_NIGHT_MASK)) {
+                    Configuration.UI_MODE_NIGHT_YES -> {
+                        context.setTheme(R.style.PopUpThemeDark)
+                        recent(context, R.color.colorPrimaryDark)
+                    }
+                    else -> {
+                        context.setTheme(R.style.PopUpThemeLight)
+                        recent(context, R.color.colorPrimary)
+                    }
+                }
+            }
+            else -> {
+                context.setTheme(R.style.PopUpThemeLight)
+                recent(context, R.color.colorPrimary)
+            }
+        }
+    }
+
     private fun recent(c: Context, color: Int) {
         val taskDescription = ActivityManager.TaskDescription(
             c.getString(R.string.app_name),

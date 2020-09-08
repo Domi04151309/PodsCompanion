@@ -71,6 +71,17 @@
         <item name="android:backgroundDimAmount">.32</item>
     </style>
 
+    <style name="PopUpThemeDark" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="dialogCornerRadius">@dimen/corner_radius</item>
+        <item name="android:background">@color/colorPrimaryDark</item>
+        <item name="android:backgroundDimAmount">.32</item>
+    </style>
+
+    <style name="PopUpThemeBlack" parent="PopUpThemeDark">
+        <item name="android:background">@color/colorPrimaryBlack</item>
+    </style>
+
     <style name="NotificationBig">
         <item name="android:gravity">center</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Small</item>

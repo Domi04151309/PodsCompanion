@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.domi04151309.podscompanion.R
+import io.github.domi04151309.podscompanion.helpers.Theme
 import io.github.domi04151309.podscompanion.services.PodsService
 import io.github.domi04151309.podscompanion.services.PodsService.Companion.status
 
@@ -25,6 +26,7 @@ class PopUpActivity : Activity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Theme.setDialog(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.pop_up_status)
         localBroadcastManager = LocalBroadcastManager.getInstance(this)

@@ -13,6 +13,7 @@ import android.os.IBinder
 import android.os.ParcelUuid
 import android.os.SystemClock
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
@@ -21,6 +22,8 @@ import io.github.domi04151309.podscompanion.activities.PopUpActivity
 import io.github.domi04151309.podscompanion.data.Status
 import io.github.domi04151309.podscompanion.helpers.NotificationHelper
 import io.github.domi04151309.podscompanion.receivers.StatusWidgetReceiver
+import java.io.IOException
+import java.io.InputStream
 import java.util.*
 
 /**
@@ -105,7 +108,8 @@ class PodsService : Service() {
                                     continue
                                 }
                                 if (strongestBeacon == null
-                                    || strongestBeacon.rssi < recentBeacons[i].rssi)
+                                    || strongestBeacon.rssi < recentBeacons[i].rssi
+                                )
                                     strongestBeacon = recentBeacons[i]
                                 i++
                             }
@@ -147,12 +151,49 @@ class PodsService : Service() {
                         }
                     }
                 })
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                receiveData(btAdapter)
+            }
         } catch (t: Throwable) {
             if (ENABLE_LOGGING) Log.d(TAG, t.toString())
         }
     }
 
-    private val scanFilters: List<ScanFilter>
+    @RequiresApi(Build.VERSION_CODES.Q)
+    fun receiveData(adapter: BluetoothAdapter) {
+        try {
+            Log.w(TAG, "1")
+            Thread{
+                Log.w(TAG, "2")
+                val socketInputStream: InputStream = adapter.listenUsingL2capChannel().accept().inputStream
+                Log.w(TAG, "3")
+                val buffer = ByteArray(256)
+                Log.w(TAG, "4")
+                var bytes: Int
+                Log.w(TAG, "5")
+                // Keep looping to listen for received messages
+                while (true) {
+                    Log.w(TAG, "6")
+                    try {
+                        //read bytes from input buffer
+                        bytes = socketInputStream.read(buffer)
+                        val readMessage = String(buffer, 0, bytes)
+                        // Print the received bytes to logcat
+                        Log.w(TAG, readMessage + "")
+                    } catch (e: IOException) {
+                        Log.e(TAG, e.toString())
+                    }
+                    Log.w(TAG, "end")
+                }
+            }.start()
+        } catch (e: Exception) {
+            Log.e(TAG, e.toString())
+        }
+    }
+
+
+        private val scanFilters: List<ScanFilter>
         get() {
             val manufacturerData = ByteArray(27)
             val manufacturerDataMask = ByteArray(27)
@@ -415,12 +456,16 @@ class PodsService : Service() {
         sendBroadcast(
             Intent()
                 .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
-                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, AppWidgetManager.getInstance(applicationContext).getAppWidgetIds(
-                    ComponentName(
-                        applicationContext,
-                        StatusWidgetReceiver::class.java
+                .putExtra(
+                    AppWidgetManager.EXTRA_APPWIDGET_IDS, AppWidgetManager.getInstance(
+                        applicationContext
+                    ).getAppWidgetIds(
+                        ComponentName(
+                            applicationContext,
+                            StatusWidgetReceiver::class.java
+                        )
                     )
-                ))
+                )
         )
     }
 

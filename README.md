@@ -1,5 +1,5 @@
 ![App Icon](https://raw.githubusercontent.com/Domi04151309/PodsCompanion/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png)
-## <b style="color:red;">This app does not work yet</b>
+## <b style="color:red;">This app does not fully work yet</b>
 # Pods Companion for Android™
 Based on [OpenPods](https://github.com/adolfintel/OpenPods) by Federico Dossena
 

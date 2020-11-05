@@ -14,6 +14,7 @@ import android.os.ParcelUuid
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import io.github.domi04151309.podscompanion.R
@@ -389,6 +390,7 @@ class PodsService : Service() {
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentText(getString(R.string.service_text))
                 .setSmallIcon(R.drawable.ic_pods_white)
+                .setColor(ContextCompat.getColor(this, R.color.colorAccent))
                 .setShowWhen(false)
                 .build()
         )
@@ -401,13 +403,13 @@ class PodsService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getSystemService(NotificationManager::class.java)?.createNotificationChannel(
-                NotificationChannel(
-                    CHANNEL_ID,
-                    getString(R.string.service_channel),
-                    NotificationManager.IMPORTANCE_LOW
-                )
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                resources.getString(R.string.service_channel),
+                NotificationManager.IMPORTANCE_LOW
             )
+            channel.setShowBadge(false)
+            getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
     }
 

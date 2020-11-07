@@ -1,10 +1,9 @@
 ![App Icon](https://raw.githubusercontent.com/Domi04151309/PodsCompanion/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png)
-## <b style="color:red;">This app does not fully work yet</b>
 # Pods Companion for Android™
 Based on [OpenPods](https://github.com/adolfintel/OpenPods) by Federico Dossena
 
 Pods Companion allows you to use your AirPods™ how they were intended to be used.
-View the battery status, use in-ear detection, and more.
+View the battery status and more.
 This app comes with a battery notification, a pop-up, and a widget, which can all be turned on or off individually.
 
 <a href='https://play.google.com/store/apps/details?id=io.github.domi04151309.podscompanion'>

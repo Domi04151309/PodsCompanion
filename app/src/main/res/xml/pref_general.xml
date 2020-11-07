@@ -7,6 +7,7 @@
     <PreferenceCategory android:title="@string/prefs">
 
         <SwitchPreference
+            app:isPreferenceVisible="false"
             android:enabled="false"
             android:defaultValue="false"
             android:icon="@drawable/ic_hearing"
@@ -43,7 +44,7 @@
             android:title="@string/pref_theme" />
         <Preference
             android:icon="@drawable/ic_info"
-            app:key="about"
+            android:key="about"
             android:summary="@string/about_summary"
             android:title="@string/about" />
     </PreferenceCategory>
